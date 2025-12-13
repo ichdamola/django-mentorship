@@ -194,4 +194,4 @@ Each page should have proper HTML structure and navigation links.
 
 ---
 
-**Next**: [Week 04: Models Basics →](../week-04-models-basics/readme.md)
+**Next**: [Week 04: Models Basics →](../week-04-models-basics)
