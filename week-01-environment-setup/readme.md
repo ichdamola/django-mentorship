@@ -651,4 +651,4 @@ Ensure the SSH agent is running: `eval "$(ssh-agent -s)"`
 
 ---
 
-**Next**: [Week 02: Python Foundations →](../week-02-python-foundations/README.md)
+**Next**: [Week 02: Python Foundations →](../week-02-python-foundations/readme.md)

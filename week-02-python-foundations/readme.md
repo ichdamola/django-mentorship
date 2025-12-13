@@ -1694,4 +1694,4 @@ Before moving to Week 03, ensure:
 
 ---
 
-**Next**: [Week 03: Django Introduction →](../week-03-django-intro/README.md)
+**Next**: [Week 03: Django Introduction →](../week-03-django-intro/readme.md)
