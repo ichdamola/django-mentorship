@@ -621,7 +621,7 @@ Before moving to Week 02, ensure you can check ALL boxes:
 - [ ] `git config user.email` shows your email
 - [ ] `ssh -T git@github.com` authenticates successfully
 - [ ] Created `hello-python` project with uv
-- [ ] `uv run python verify_environment.py` passes all checks
+- [ ] `uv run python verify_environment.py` passes all checks - In view
 - [ ] Project is committed to git with proper .gitignore
 
 ---
