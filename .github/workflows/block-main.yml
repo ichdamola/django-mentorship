@@ -1,0 +1,15 @@
+name: Block merges to main
+
+on:
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    block:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Prevent merge into main
+              run: |
+                  echo "❌ Merging into main is disabled. This repo is read-only."
+                  exit 1

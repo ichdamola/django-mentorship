@@ -1,0 +1,21 @@
+name: Enforce submission branch naming
+
+on:
+    pull_request:
+
+jobs:
+    validate-branch:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check branch name
+              run: |
+                  BRANCH="${{ github.head_ref }}"
+                  echo "Checking branch: $BRANCH"
+
+                  if [[ ! "$BRANCH" =~ ^submission/[a-zA-Z0-9_-]+/week-[0-9]+$ ]]; then
+                    echo "❌ Invalid branch name."
+                    echo "Expected format: submission/<github-username>/week-<number>"
+                    exit 1
+                  fi
+
+                  echo "✅ Branch name valid"
