@@ -1,6 +1,6 @@
 # Django Mastery: From Beginner to Expert
 
-A comprehensive 16-week Django mentorship curriculum designed to take you from complete beginner to production-ready expert.
+A comprehensive 16-week Django mentorship curriculum designed to take you from complete beginner to production-ready expert..
 
 ## 🎯 Program Overview
 
