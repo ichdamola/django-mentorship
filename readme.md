@@ -142,4 +142,4 @@ This project is open source! Help make it better:
 - Fix typos or add explanations
 - Translate content
 
-**Ready?** Start with [Week 01: Environment Setup](week-01-environment-setup/README.md)
+**Ready?** Start with [Week 01: Environment Setup](week-01-environment-setup)

@@ -103,7 +103,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 **Windows (PowerShell):**
 
 ```powershell
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
 **Verification:**
@@ -136,12 +136,6 @@ uv python install 3.12
 
 # Verify installation
 uv python list --only-installed
-```
-
-**Expected Output:**
-
-```
-cpython-3.12.x-[your-platform]    <install-path>
 ```
 
 > ⚠️ **Important**: We use `uv python install` instead of installing Python from python.org or homebrew. This ensures consistent versions across all your projects.
@@ -621,7 +615,7 @@ Before moving to Week 02, ensure you can check ALL boxes:
 - [ ] `git config user.email` shows your email
 - [ ] `ssh -T git@github.com` authenticates successfully
 - [ ] Created `hello-python` project with uv
-- [ ] `uv run python verify_environment.py` passes all checks - In view
+- [ ] `uv run python verify_environment.py` passes all checks
 - [ ] Project is committed to git with proper .gitignore
 
 ---
