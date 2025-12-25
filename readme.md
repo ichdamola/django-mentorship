@@ -1,6 +1,15 @@
 # Django Mastery: From Beginner to Expert
 
-A comprehensive 16-week Django mentorship curriculum designed to take you from complete beginner to production-ready expert..
+[![Stars](https://img.shields.io/github/stars/ichdamola/django-mentorship?style=social)](https://github.com/ichdamola/django-mentorship/stargazers)
+[![Forks](https://img.shields.io/github/forks/ichdamola/django-mentorship?style=social)](https://github.com/ichdamola/django-mentorship/network/members)
+[![Contributors](https://img.shields.io/github/contributors/ichdamola/django-mentorship)](https://github.com/ichdamola/django-mentorship/graphs/contributors)
+[![License](https://img.shields.io/github/license/ichdamola/django-mentorship)](https://github.com/ichdamola/django-mentorship/blob/main/LICENSE)
+
+> A comprehensive 16-week Django mentorship curriculum designed to take you from complete beginner to production-ready expert.
+> Built with modern tools, real-world projects, and a scalable submission system for **1000+ learners**.
+
+🌟 **Star this repo** if you're learning Django or find it useful!  
+🔀 **Fork it** to start your journey and submit your weekly work.
 
 ## 🎯 Program Overview
 
@@ -83,9 +92,10 @@ Each week follows this pattern:
 1. **Read** the week's README completely
 2. **Study** linked documentation sections
 3. **Complete** the exercises in order
-4. **Build** the weekly project
-5. **Submit** via pull request to your fork
-6. **Review** with your mentor
+4. **Build** the weekly project in **your fork**
+5. **Submit:** Create a branch `submission/<your-github-username>/week-XX`, push to your fork, and open a Pull Request to this repo's main (for review only – no merges!)
+6. **Review:** Get feedback from mentors/community
+   > Why this works at scale: Forks isolate work (no overrides), PRs allow unlimited reviews without touching main. Main repo stays clean with only challenges.
 
 ## ✅ Completion Checklist
 
@@ -112,7 +122,7 @@ Track your progress:
 
 - [Django Official Documentation](https://docs.djangoproject.com/en/5.0/)
 - [Django REST Framework](https://www.django-rest-framework.org/)
-- [Two Scoops of Django](https://www.feldroy.com/books/two-scoops-of-django-3-x) (Recommended Book)
+- [Two Scoops of Django](https://www.feldroy.com/books/two-scoops-of-django-3-x) (Recommended)
 - [uv Documentation](https://docs.astral.sh/uv/)
 - [ruff Documentation](https://docs.astral.sh/ruff/)
 
@@ -124,19 +134,12 @@ Track your progress:
 4. **Understand, don't memorize** - Know WHY, not just HOW.
 5. **Build real things** - Theory without practice is useless.
 
-## 📞 Getting Help
+## 🔗 Open Source & Contributing
 
-When stuck:
+This project is open source! Help make it better:
 
-1. Re-read the error message
-2. Check the linked documentation
-3. Search the Django documentation
-4. Ask your mentor with:
-   - What you're trying to do
-   - What you expected
-   - What actually happened
-   - What you've tried
-
----
+- Improve weeks/exercises
+- Fix typos or add explanations
+- Translate content
 
 **Ready?** Start with [Week 01: Environment Setup](week-01-environment-setup/README.md)
