@@ -20,7 +20,7 @@ def check_command(name: str, command: list [str], expected_in_output: str = "") 
             timeout=10,
         )
         if expected_in_output and expected_in_output not in result.stdout + result.stderr:
-            print(f"❌ Unexpected output")
+            print("❌ Unexpected output")
             return False
         print(f"✅ Found at {path}")
         return True
