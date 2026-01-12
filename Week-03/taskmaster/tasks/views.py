@@ -1,13 +1,11 @@
 from django.http import HttpRequest, HttpResponse
+from .management.commands import seed_data
 
 def index(request: HttpRequest) -> HttpResponse:
     return HttpResponse("<h1>TaskMaster</h1><p>Welcome to your task manager!</p>")
 
 def task_list(request: HttpRequest) -> HttpResponse:
-    tasks = [
-        {"id": 1, "title": "Learn Django", "status": "in_progress"},
-        {"id": 2, "title": "Build an app", "status": "pending"},
-    ]
+    tasks = Task.objects.select_related("category").prefetch_related("tags")
     html = "<h1>Tasks</h1><ul>"
     for task in tasks:
         html += f"<li><a href='/tasks/{task['id']}/'>{task['title']}</a> - {task['status']}</li>"
