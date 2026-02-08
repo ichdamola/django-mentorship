@@ -27,7 +27,7 @@ By the end of this week, you will:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                Object-Relational Mapping (ORM)                   │
+│                Object-Relational Mapping (ORM)                  │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │   Python Code                        SQL / Database              │
