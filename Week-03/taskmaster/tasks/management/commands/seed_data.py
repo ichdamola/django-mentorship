@@ -6,33 +6,41 @@ from datetime import timedelta
 import random
 from tasks.models import Category, Task, Tag, Priority, Status
 
+
 class Command(BaseCommand):
     help = "Seed database with sample data"
-    
+
     def handle(self, *args, **options):
         self.stdout.write("Seeding database...")
-        
+
         # Clear existing data
         Task.objects.all().delete()
         Category.objects.all().delete()
         Tag.objects.all().delete()
-        
-        #Create categories
+
+        # Create categories
         categories = [
-            Category.objects.create(name = "Work", color = "#0066cc", description = "Work tasks"),
-            Category.objects.create(name = "Personal", color = "#28a745", description = "Personal tasks"),
-            Category.objects.create(name = "Learning", color = "#6f42c1", description = "Learning goals"),
-            Category.objects.create(name = "Health", color = "#dc3545", description = "Health & fitness"),
+            Category.objects.create(
+                name="Work", color="#0066cc", description="Work tasks"
+            ),
+            Category.objects.create(
+                name="Personal", color="#28a745", description="Personal tasks"
+            ),
+            Category.objects.create(
+                name="Learning", color="#6f42c1", description="Learning goals"
+            ),
+            Category.objects.create(
+                name="Health", color="#dc3545", description="Health & fitness"
+            ),
         ]
 
         self.stdout.write(f"Created {len(categories)} categories")
-        
+
         # Create tags
         tag_names = ["urgent", "important", "quick-win", "blocked", "review", "meeting"]
         tags = [Tag.objects.create(name=name) for name in tag_names]
         self.stdout.write(f"Created {len(tags)} tags")
-        
-        
+
         # Create tasks
         task_template = [
             ("Complete quaterly report", "Work", Priority.HIGH),
@@ -47,27 +55,36 @@ class Command(BaseCommand):
             ("Complete online course", "Learning", Priority.MEDIUM),
             ("Morning workout", "Health", Priority.HIGH),
             ("Meal prep for week", "Health", Priority.MEDIUM),
-            ("Schedule doctor appointment", "Health", Priority.LOW),            
+            ("Schedule doctor appointment", "Health", Priority.LOW),
         ]
-        
+
         tasks_created = []
         for title, cat_name, priority in task_template:
             category = next(c for c in categories if c.name == cat_name)
             status = random.choice(list(Status))
-            
+
             # Random due date within net 14 days or None
             due_date = None
             if random.random() > 0.3:
-                due_date = timezone.now().date() + timedelta(days=random.randint(-3, 14))
-                
-            task = Task.objects.create(title = title, description = f"Description for: {title}", priority = priority, status = status, category = category, due_date = due_date,)
-            
+                due_date = timezone.now().date() + timedelta(
+                    days=random.randint(-3, 14)
+                )
+
+            task = Task.objects.create(
+                title=title,
+                description=f"Description for: {title}",
+                priority=priority,
+                status=status,
+                category=category,
+                due_date=due_date,
+            )
+
             # Add random tags
-            
-            random_tags = random.sample(tags, k = random.randint(0, 3))
+
+            random_tags = random.sample(tags, k=random.randint(0, 3))
             task.tags.add(*random_tags)
-            
+
             tasks_created.append(task)
-            
+
         self.stdout.write(f"Created {len(tasks_created)} tasks")
         self.stdout.write(self.style.SUCCESS("Database seeded successfully!"))

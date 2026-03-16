@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Tasks - TaskMaster{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Tasks</h1>
+    <a href="{% url 'tasks:task_create' %}" class="btn btn-primary">
+        + New Task
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    {% for value, label in statuses %}
+                    <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.pk }}"
+                            {% if current_category == category.pk|stringformat:"d" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary">Filter</button>
+                <a href="{% url 'tasks:task_list' %}" class="btn btn-outline-secondary ms-2">
+                    Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Task List -->
+{% if page_obj %}
+<div class="list-group mb-4">
+    {% for task in page_obj %}
+    <div class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between align-items-start">
+            <div>
+                <h5 class="mb-1">
+                    <a href="{% url 'tasks:task_detail' pk=task.pk %}"
+                       class="text-decoration-none">
+                        {{ task.title }}
+                    </a>
+                </h5>
+                <p class="mb-1 text-muted">
+                    {% if task.category %}
+                    <span class="badge" style="background-color: {{ task.category.color }}">
+                        {{ task.category.name }}
+                    </span>
+                    {% endif %}
+
+                    {% for tag in task.tags.all %}
+                    <span class="badge bg-secondary">{{ tag.name }}</span>
+                    {% endfor %}
+                </p>
+                {% if task.description %}
+                <small class="text-muted">
+                    {{ task.description|truncatewords:20 }}
+                </small>
+                {% endif %}
+            </div>
+            <div class="text-end">
+                <!-- Status Badge -->
+                <span class="badge
+                    {% if task.status == 'completed' %}bg-success
+                    {% elif task.status == 'in_progress' %}bg-warning text-dark
+                    {% elif task.status == 'cancelled' %}bg-danger
+                    {% else %}bg-secondary{% endif %}">
+                    {{ task.get_status_display }}
+                </span>
+
+                <!-- Priority -->
+                <div class="small text-muted mt-1">
+                    Priority: {{ task.priority_display }}
+                </div>
+
+                <!-- Due Date -->
+                {% if task.due_date %}
+                <div class="small {% if task.is_overdue %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                    Due: {{ task.due_date|date:"M d, Y" }}
+                    {% if task.is_overdue %}(Overdue!){% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% include "includes/_pagination.html" with page_obj=page_obj %}
+
+{% else %}
+<div class="alert alert-info">
+    <p class="mb-0">
+        No tasks found.
+        <a href="{% url 'tasks:task_create' %}">Create your first task!</a>
+    </p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils import timezone
-
+from django.conf import settings
 
 class Category(models.Model):
     """Categories for organizing tasks. Database table: tasks_category"""
@@ -51,6 +51,8 @@ class Status(models.TextChoices):
 
 class Task(models.Model):
     """A task in the task management system. Database table: tasks_task"""
+    
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tasks')
 
     # Required fields
     title = models.CharField(max_length=200, help_text="Task title")
@@ -126,8 +128,8 @@ class Task(models.Model):
 
 
 class Tag(models.Model):
-    """Tags for flexible task categorization. Many-to-many relationship with Task.
-    """
+    """Tags for flexible task categorization. Many-to-many relationship with Task."""
+
     name = models.CharField(max_length=50, unique=True)
 
     def __str__(self) -> str:
@@ -141,3 +143,5 @@ Task.add_to_class(
         Tag, blank=True, related_name="tasks", help_text="Tags for this task"
     ),
 )
+
+
