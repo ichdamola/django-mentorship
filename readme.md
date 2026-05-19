@@ -32,22 +32,22 @@ config:
   look: handDrawn
   theme: neutral
 ---
-flowchart LR
-    User([👤 Browser])
-    Nginx[Nginx<br/>reverse proxy]
-    Web[Django + Gunicorn<br/>web service]
-    Worker[Celery<br/>worker]
-    Beat[Celery<br/>beat scheduler]
-    DB[(PostgreSQL)]
-    Cache[(Redis<br/>cache + broker)]
+flowchart TB
+    subgraph sync["Synchronous request path"]
+        direction LR
+        User([👤 Browser]) --> Nginx[Nginx<br/>reverse proxy]
+        Nginx --> Django[Django + Gunicorn]
+        Django --> Postgres[(PostgreSQL)]
+    end
 
-    User -->|HTTPS| Nginx
-    Nginx -->|WSGI| Web
-    Web <-->|ORM| DB
-    Web <-->|read / write| Cache
-    Beat -->|enqueue| Cache
-    Worker -->|consume| Cache
-    Worker <-->|ORM| DB
+    subgraph async["Asynchronous task path"]
+        direction LR
+        Beat[Celery beat<br/>scheduler] --> Redis[(Redis<br/>broker + cache)]
+        Redis --> Worker[Celery worker]
+    end
+
+    Django --> Redis
+    Worker --> Postgres
 ```
 
 | Phase | Weeks | What gets wired up |

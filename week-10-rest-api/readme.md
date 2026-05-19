@@ -199,4 +199,4 @@ urlpatterns = [
 
 ---
 
-**Next**: [Week 11: Testing →](../week-11-testing/README.md)
+**Next**: [Week 11: Testing →](../week-11-testing/readme.md)

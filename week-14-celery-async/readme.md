@@ -226,4 +226,4 @@ async def fetch_external_data(request):
 
 ---
 
-**Next**: [Week 15: Deployment →](../week-15-deployment/README.md)
+**Next**: [Week 15: Deployment →](../week-15-deployment/readme.md)

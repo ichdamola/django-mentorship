@@ -304,4 +304,4 @@ uv run pytest -v
 
 ---
 
-**Next**: [Week 12: Advanced ORM →](../week-12-advanced-orm/README.md)
+**Next**: [Week 12: Advanced ORM →](../week-12-advanced-orm/readme.md)

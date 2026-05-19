@@ -721,4 +721,4 @@ Now update your views to use real data from the database!
 
 ---
 
-**Next**: [Week 05: Views & URLs →](../week-05-views-urls/README.md)
+**Next**: [Week 05: Views & URLs →](../week-05-views-urls/readme.md)

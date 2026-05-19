@@ -134,4 +134,4 @@ class TaskCreateView(CreateView):
 
 ---
 
-**Next**: [Week 08: Admin →](../week-08-admin/README.md)
+**Next**: [Week 08: Admin →](../week-08-admin/readme.md)

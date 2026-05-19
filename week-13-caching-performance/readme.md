@@ -185,4 +185,4 @@ urlpatterns += [path('silk/', include('silk.urls'))]
 
 ---
 
-**Next**: [Week 14: Celery & Async →](../week-14-celery-async/README.md)
+**Next**: [Week 14: Celery & Async →](../week-14-celery-async/readme.md)

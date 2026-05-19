@@ -173,4 +173,4 @@ with connection.cursor() as cursor:
 
 ---
 
-**Next**: [Week 13: Caching & Performance →](../week-13-caching-performance/README.md)
+**Next**: [Week 13: Caching & Performance →](../week-13-caching-performance/readme.md)

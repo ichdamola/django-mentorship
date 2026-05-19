@@ -1087,4 +1087,4 @@ Your task is to create all templates for TaskMaster with:
 
 ---
 
-**Next**: [Week 07: Forms →](../week-07-forms/README.md)
+**Next**: [Week 07: Forms →](../week-07-forms/readme.md)

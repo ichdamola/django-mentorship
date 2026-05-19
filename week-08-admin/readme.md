@@ -122,4 +122,4 @@ uv run python manage.py createsuperuser
 
 ---
 
-**Next**: [Week 09: Authentication →](../week-09-authentication/README.md)
+**Next**: [Week 09: Authentication →](../week-09-authentication/readme.md)

@@ -286,4 +286,4 @@ docker-compose down
 
 ---
 
-**Next**: [Week 16: Capstone Project →](../week-16-capstone/README.md)
+**Next**: [Week 16: Capstone Project →](../week-16-capstone/readme.md)

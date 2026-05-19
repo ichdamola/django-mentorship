@@ -261,4 +261,4 @@ class TaskListView(LoginRequiredMixin, ListView):
 
 ---
 
-**Next**: [Week 10: REST API →](../week-10-rest-api/README.md)
+**Next**: [Week 10: REST API →](../week-10-rest-api/readme.md)
