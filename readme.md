@@ -22,6 +22,41 @@ Week 09-12:  Advanced Django  → REST APIs, Authentication, Testing
 Week 13-16:  Production       → Deployment, Performance, Security
 ```
 
+## 🏗️ What You'll Build
+
+Across the 16 weeks you'll incrementally build **TaskMaster**, a production-ready task management application. By Week 15 the architecture looks like this — each layer wired up week by week:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    User([👤 Browser])
+    Nginx[Nginx<br/>reverse proxy]
+    Web[Django + Gunicorn<br/>web service]
+    Worker[Celery<br/>worker]
+    Beat[Celery<br/>beat scheduler]
+    DB[(PostgreSQL)]
+    Cache[(Redis<br/>cache + broker)]
+
+    User -->|HTTPS| Nginx
+    Nginx -->|WSGI| Web
+    Web <-->|ORM| DB
+    Web <-->|read / write| Cache
+    Beat -->|enqueue| Cache
+    Worker -->|consume| Cache
+    Worker <-->|ORM| DB
+```
+
+| Phase | Weeks | What gets wired up |
+| --- | --- | --- |
+| Foundation | 01–04 | Python tooling, first Django project, models + migrations |
+| Core Django | 05–08 | Views, templates, forms, admin |
+| Advanced | 09–12 | Auth + custom user, REST API, pytest, advanced ORM |
+| Production | 13–16 | Caching, Celery, Docker + CI/CD, capstone |
+
 ## 🛠️ Required Tools
 
 We enforce modern, best-practice tooling throughout this program:
@@ -35,28 +70,26 @@ We enforce modern, best-practice tooling throughout this program:
 | **[Docker](https://www.docker.com/)**         | Containerization                 | Consistent environments                                                 |
 | **[PostgreSQL](https://www.postgresql.org/)** | Database                         | Production-grade, what you'll use in real jobs                          |
 
-## 📁 Repository Structure
+## 📁 Curriculum & Progress
 
-```
-django-mentorship/
-├── README.md                    # This file
-├── week-01-environment-setup/   # Python, uv, Git fundamentals
-├── week-02-python-foundations/  # Python concepts for Django
-├── week-03-django-intro/        # First Django project
-├── week-04-models-basics/       # ORM fundamentals
-├── week-05-views-urls/          # Request/response cycle
-├── week-06-templates/           # Django template language
-├── week-07-forms/               # Form handling & validation
-├── week-08-admin/               # Django admin customization
-├── week-09-authentication/      # Users, permissions, sessions
-├── week-10-rest-api/            # Django REST Framework
-├── week-11-testing/             # pytest & test strategies
-├── week-12-advanced-orm/        # Complex queries, optimization
-├── week-13-caching-performance/ # Redis, query optimization
-├── week-14-celery-async/        # Background tasks
-├── week-15-deployment/          # Docker, CI/CD, production
-└── week-16-capstone/            # Final project
-```
+Each week is a self-contained folder with its own README, exercises, and weekly project. Open a week to begin, tick the box when you finish.
+
+- [ ] Week 01: [Environment Setup](week-01-environment-setup) — Python, uv, Git fundamentals
+- [ ] Week 02: [Python Foundations](week-02-python-foundations) — Python concepts for Django
+- [ ] Week 03: [Django Introduction](week-03-django-intro) — First Django project
+- [ ] Week 04: [Models Basics](week-04-models-basics) — ORM fundamentals
+- [ ] Week 05: [Views & URLs](week-05-views-urls) — Request/response cycle
+- [ ] Week 06: [Templates](week-06-templates) — Django template language
+- [ ] Week 07: [Forms](week-07-forms) — Form handling & validation
+- [ ] Week 08: [Admin](week-08-admin) — Django admin customization
+- [ ] Week 09: [Authentication](week-09-authentication) — Users, permissions, sessions
+- [ ] Week 10: [REST API](week-10-rest-api) — Django REST Framework
+- [ ] Week 11: [Testing](week-11-testing) — pytest & test strategies
+- [ ] Week 12: [Advanced ORM](week-12-advanced-orm) — Complex queries, optimization
+- [ ] Week 13: [Caching & Performance](week-13-caching-performance) — Redis, query optimization
+- [ ] Week 14: [Celery & Async](week-14-celery-async) — Background tasks
+- [ ] Week 15: [Deployment](week-15-deployment) — Docker, CI/CD, production
+- [ ] Week 16: [Capstone Project](week-16-capstone) — Final project
 
 ## 🚀 Getting Started
 
@@ -96,27 +129,6 @@ Each week follows this pattern:
 5. **Submit:** Create a branch `submission/<your-github-username>/week-XX`, push to your fork, and open a Pull Request to this repo's main (for review only – no merges!)
 6. **Review:** Get feedback from mentors/community
    > Why this works at scale: Forks isolate work (no overrides), PRs allow unlimited reviews without touching main. Main repo stays clean with only challenges.
-
-## ✅ Completion Checklist
-
-Track your progress:
-
-- [ ] Week 01: Environment Setup
-- [ ] Week 02: Python Foundations
-- [ ] Week 03: Django Introduction
-- [ ] Week 04: Models Basics
-- [ ] Week 05: Views & URLs
-- [ ] Week 06: Templates
-- [ ] Week 07: Forms
-- [ ] Week 08: Admin
-- [ ] Week 09: Authentication
-- [ ] Week 10: REST API
-- [ ] Week 11: Testing
-- [ ] Week 12: Advanced ORM
-- [ ] Week 13: Caching & Performance
-- [ ] Week 14: Celery & Async
-- [ ] Week 15: Deployment
-- [ ] Week 16: Capstone Project
 
 ## 📚 Primary Resources
 
