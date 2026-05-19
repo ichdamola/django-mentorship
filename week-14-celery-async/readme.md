@@ -8,6 +8,25 @@
 - Monitor tasks with Flower
 - Use Django's async views
 
+This week you'll wire up the async path — work is published to Redis and consumed by separate worker processes:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    Django["Django view<br/>send_reminder.delay()"]
+    Beat["Celery beat<br/>scheduler"]
+    Broker[(Redis<br/>broker)]
+    Worker["Celery worker"]
+
+    Django -->|"enqueue"| Broker
+    Beat -->|"schedule"| Broker
+    Broker -->|"consume"| Worker
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                                              | Section   | Time   |

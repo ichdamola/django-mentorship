@@ -10,6 +10,32 @@ By the end of this week, you will:
 - Configure Django settings properly
 - Work with Django's development server
 
+By the end of the week your request will travel this path:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    Browser([👤 Browser])
+
+    subgraph django["Django project"]
+        direction LR
+        ConfigURL["config/urls.py"]
+        AppURL["tasks/urls.py"]
+        View["views.task_list"]
+        Response[HttpResponse]
+
+        ConfigURL -->|include| AppURL
+        AppURL -->|match| View
+        View --> Response
+    end
+
+    Browser -->|"GET /tasks/"| ConfigURL
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                          | Section       | Time   |

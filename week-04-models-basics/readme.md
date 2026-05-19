@@ -10,6 +10,23 @@ By the end of this week, you will:
 - Perform basic CRUD operations using the ORM
 - Understand relationships between models
 
+The TaskMaster data model you'll define this week:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    Category["Category<br/>name • color<br/>description"]
+    Task["Task<br/>title • status<br/>priority • due_date"]
+    Tag["Tag<br/>name"]
+
+    Category -->|"groups 0..*"| Task
+    Task <-->|"many-to-many"| Tag
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                   | Section         | Time   |
