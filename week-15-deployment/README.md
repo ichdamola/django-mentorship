@@ -167,7 +167,10 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Static files
+# Static files — uses WhiteNoise to serve them in production.
+# Install with: uv add whitenoise
+# Also add 'whitenoise.middleware.WhiteNoiseMiddleware' to MIDDLEWARE, directly
+# after 'django.middleware.security.SecurityMiddleware'.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 

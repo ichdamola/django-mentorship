@@ -36,11 +36,69 @@ source = ["tasks"]
 omit = ["*/migrations/*", "*/tests/*"]
 ```
 
+### Test package layout
+
+Tests live inside each app under a `tests/` Python **package**. Create the empty
+`__init__.py` files first or Python won't be able to import them:
+
+```bash
+mkdir -p tasks/tests accounts/tests
+touch tasks/tests/__init__.py accounts/tests/__init__.py
+```
+
+The final layout you should have at the end of this week:
+
+```
+taskmaster/
+├── conftest.py                    ← project-root fixtures (see "Fixtures" below)
+├── pyproject.toml
+├── config/
+├── accounts/
+│   ├── __init__.py
+│   ├── models.py                  ← from Week 09
+│   └── tests/
+│       ├── __init__.py
+│       └── factories.py           ← UserFactory lives here
+└── tasks/
+    ├── __init__.py
+    ├── models.py
+    └── tests/
+        ├── __init__.py
+        ├── factories.py           ← TaskFactory, CategoryFactory, TagFactory
+        ├── test_models.py
+        └── test_views.py
+```
+
+> 💡 **Why two `factories.py` files?** Factories belong with the app whose models
+> they create. `UserFactory` lives in `accounts/` because it builds users;
+> `TaskFactory` lives in `tasks/` because it builds tasks. Cross-app references use
+> the string form (`'accounts.tests.factories.UserFactory'`) to avoid import cycles.
+
 ---
 
 ## Key Concepts
 
 ### Factories
+
+```python
+# accounts/tests/factories.py
+import factory
+from django.contrib.auth import get_user_model
+from factory.django import DjangoModelFactory
+
+
+class UserFactory(DjangoModelFactory):
+    class Meta:
+        model = get_user_model()
+        django_get_or_create = ('username',)
+
+    username = factory.Sequence(lambda n: f'user{n}')
+    email = factory.LazyAttribute(lambda obj: f'{obj.username}@example.com')
+    password = factory.PostGenerationMethodCall('set_password', 'password123')
+```
+
+`get_user_model()` is used instead of importing `accounts.models.User` directly so
+this file keeps working even if you later swap the user model.
 
 ```python
 # tasks/tests/factories.py
@@ -138,7 +196,8 @@ import pytest
 from django.urls import reverse
 from rest_framework import status as http_status
 
-from .factories import TaskFactory, UserFactory
+from accounts.tests.factories import UserFactory
+from .factories import TaskFactory
 
 
 @pytest.mark.django_db
@@ -185,8 +244,12 @@ class TestTaskAPI:
 
 ### Fixtures
 
+`conftest.py` goes at the **project root** (next to `manage.py` and `pyproject.toml`),
+not inside `tasks/tests/`. Putting it at the root makes the fixtures below available
+to every test file in every app.
+
 ```python
-# conftest.py
+# conftest.py  ← project root, NOT tasks/tests/conftest.py
 import pytest
 from rest_framework.test import APIClient
 

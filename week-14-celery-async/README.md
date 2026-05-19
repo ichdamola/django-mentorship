@@ -57,6 +57,11 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
+# Email — the tasks below call send_mail(). In development, route email to the
+# console so the task succeeds without an SMTP server. Override with real SMTP
+# settings in production (EMAIL_HOST, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, etc.).
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 # Celery Beat (periodic tasks)
 CELERY_BEAT_SCHEDULE = {
     'cleanup-old-tasks': {
