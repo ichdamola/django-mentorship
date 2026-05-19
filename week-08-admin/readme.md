@@ -8,6 +8,26 @@
 - Use inlines for related models
 - Customize admin forms and templates
 
+Each model gets its own ModelAdmin registered with the admin site:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    Site["admin.site"]
+
+    CategoryAdmin["CategoryAdmin"]
+    TaskAdmin["TaskAdmin<br/>list_display<br/>list_filter<br/>search_fields<br/>actions • inlines"]
+    TagAdmin["TagAdmin"]
+
+    Site -->|register| CategoryAdmin
+    Site -->|register| TaskAdmin
+    Site -->|register| TagAdmin
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                          | Section   | Time   |

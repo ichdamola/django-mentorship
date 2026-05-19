@@ -10,6 +10,35 @@ By the end of this week, you will:
 - Build custom template tags and filters
 - Organize templates properly in your project
 
+The template hierarchy you'll build — small partials get included into one `base.html` skeleton, then every page extends it:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    subgraph partials["Partials (included)"]
+        direction TB
+        Navbar[_navbar.html]
+        Footer[_footer.html]
+        Messages[_messages.html]
+    end
+
+    Base["base.html<br/>skeleton + blocks"]
+
+    subgraph pages["Pages (extend base)"]
+        direction TB
+        List[task_list.html]
+        Detail[task_detail.html]
+        Form[task_form.html]
+    end
+
+    partials -.->|"{% include %}"| Base
+    Base -->|"{% extends %}"| pages
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                                  | Section   | Time   |

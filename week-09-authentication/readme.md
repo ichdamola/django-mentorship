@@ -8,6 +8,26 @@
 - Handle permissions and groups
 - Protect views with decorators and mixins
 
+How a request reaches (or doesn't reach) a protected view:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    Request([Request])
+    Auth["AuthenticationMiddleware<br/>sets request.user"]
+    Guard{"@login_required<br/>or LoginRequiredMixin"}
+    View[your view]
+    Login["redirect to<br/>/accounts/login/"]
+
+    Request --> Auth --> Guard
+    Guard -->|authenticated| View
+    Guard -->|anonymous| Login
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                                                | Section   | Time   |

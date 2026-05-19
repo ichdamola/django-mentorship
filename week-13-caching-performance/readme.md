@@ -8,6 +8,27 @@
 - Profile and optimize application performance
 - Implement database connection pooling
 
+The cache-aside pattern you'll implement — hit Redis first, fall back to PostgreSQL and warm the cache on miss:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart TB
+    Request([Request])
+    Check{"In Redis?"}
+    Hit[Return cached value]
+    DB[("PostgreSQL<br/>query")]
+    Store[Store in Redis]
+    Response([Response])
+
+    Request --> Check
+    Check -->|hit| Hit --> Response
+    Check -->|miss| DB --> Store --> Response
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                              | Section   | Time   |

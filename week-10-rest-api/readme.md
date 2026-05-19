@@ -8,6 +8,27 @@
 - Handle authentication and permissions
 - Document your API
 
+The DRF stack you'll wire up — a router exposes a ViewSet, which delegates serialization to a Serializer, which talks to the model:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    Client([API client])
+    Router["DefaultRouter"]
+    ViewSet["TaskViewSet<br/>get_queryset<br/>perform_create<br/>@action"]
+    Serializer["TaskSerializer<br/>validate / to_representation"]
+    Model[(Task model)]
+
+    Client -->|"/api/v1/tasks/"| Router
+    Router --> ViewSet
+    ViewSet <--> Serializer
+    Serializer <--> Model
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                    | Section   | Time   |

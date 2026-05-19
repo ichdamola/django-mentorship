@@ -8,6 +8,32 @@
 - Mock external dependencies
 - Achieve high test coverage
 
+The testing setup you'll build — factories generate test data, conftest exposes fixtures, and each test file covers one layer:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    subgraph fixtures["Fixtures + factories"]
+        direction TB
+        Factory["factory-boy<br/>UserFactory • TaskFactory"]
+        Conftest["conftest.py<br/>shared fixtures"]
+    end
+
+    subgraph tests["pytest test files"]
+        direction TB
+        Model[test_models.py]
+        View[test_views.py]
+        API[test API endpoints]
+    end
+
+    Factory --> tests
+    Conftest --> tests
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                | Section         | Time   |

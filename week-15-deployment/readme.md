@@ -8,6 +8,30 @@
 - Configure CI/CD with GitHub Actions
 - Implement security best practices
 
+The CI/CD pipeline you'll set up — every push runs through GitHub Actions before any artifact reaches production:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    Code[git push]
+
+    subgraph ci["GitHub Actions"]
+        direction LR
+        Lint["ruff check"]
+        Test["pytest --cov"]
+        Build["docker build"]
+        Lint --> Test --> Build
+    end
+
+    Deploy[deploy to host]
+
+    Code --> ci --> Deploy
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                                         | Section     | Time   |

@@ -4,6 +4,25 @@
 
 Apply everything you've learned to build a complete, production-ready Django application from scratch.
 
+The 7-day milestone path for your capstone:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    D12["Day 1-2<br/>Setup • models<br/>basic CRUD"]
+    D34["Day 3-4<br/>Auth • forms<br/>templates"]
+    D5["Day 5<br/>Admin • REST API"]
+    D6["Day 6<br/>Testing • caching"]
+    D7["Day 7<br/>Deploy • docs"]
+    Demo([10-min demo])
+
+    D12 --> D34 --> D5 --> D6 --> D7 --> Demo
+```
+
 ---
 
 ## Project Options

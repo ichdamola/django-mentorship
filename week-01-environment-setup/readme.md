@@ -10,6 +10,25 @@ By the end of this week, you will:
 - Have Git configured with proper SSH authentication
 - Understand the difference between system Python and project Python
 
+The setup you'll do this week, in order:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    Install["Install uv"]
+    Python["uv python install 3.12"]
+    Project["uv init"]
+    Deps["uv add --dev ruff pytest"]
+    GitCfg["git config + SSH key"]
+    Verify["verify_environment.py"]
+
+    Install --> Python --> Project --> Deps --> GitCfg --> Verify
+```
+
 ## 📚 Required Reading
 
 Before starting exercises, read these documentation sections:

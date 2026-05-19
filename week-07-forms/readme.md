@@ -8,6 +8,32 @@
 - Implement custom form validation
 - Work with formsets
 
+The form lifecycle you'll handle in your view — GET renders, POST validates and either saves or re-renders with errors:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    Request([Request])
+    Method{"request.method"}
+
+    Empty["TaskForm()<br/>render empty"]
+    Bound["TaskForm(request.POST)"]
+    Valid{"is_valid()?"}
+    Save["form.save()"]
+    Redirect[redirect to detail]
+    Errors[re-render with errors]
+
+    Request --> Method
+    Method -->|GET| Empty
+    Method -->|POST| Bound --> Valid
+    Valid -->|yes| Save --> Redirect
+    Valid -->|no| Errors
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                       | Section   | Time   |

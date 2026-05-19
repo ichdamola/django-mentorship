@@ -10,6 +10,37 @@ By the end of this week, you will:
 - Handle files and exceptions properly
 - Understand type hints and how Django uses them
 
+Each Python concept this week maps to where you'll meet it in Django:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    subgraph py["Python concepts"]
+        direction TB
+        Classes["Classes + metaclasses"]
+        Dec["Decorators"]
+        CM["Context managers"]
+        Hints["Type hints"]
+    end
+
+    subgraph dj["Django uses them as"]
+        direction TB
+        Models["models.Model"]
+        Views["@login_required, mixins"]
+        Tx["transaction.atomic()"]
+        QS["QuerySet[Model]"]
+    end
+
+    Classes -.-> Models
+    Dec -.-> Views
+    CM -.-> Tx
+    Hints -.-> QS
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                         | Section                          | Time   |

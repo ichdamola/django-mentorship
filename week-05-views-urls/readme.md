@@ -17,6 +17,33 @@ By the end of this week, you will:
 - Work with request/response objects
 - Implement redirects, error handling, and HTTP responses
 
+The routing path you'll wire up — URLs dispatch to either a function-based or a class-based view:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    Request([HTTP request])
+    URLs["urls.py<br/>path() patterns"]
+
+    subgraph views["View options"]
+        direction TB
+        FBV["Function-based view"]
+        CBV["Generic CBV<br/>(ListView, DetailView, ...)"]
+    end
+
+    Response([HTTP response])
+
+    Request --> URLs
+    URLs --> FBV
+    URLs --> CBV
+    FBV --> Response
+    CBV --> Response
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                             | Section      | Time   |

@@ -8,6 +8,30 @@
 - Implement raw SQL when needed
 - Profile and debug database queries
 
+The QuerySet optimization toolbox you'll reach for, and what each tool fixes:
+
+```mermaid
+---
+config:
+  look: handDrawn
+  theme: neutral
+---
+flowchart LR
+    Query["QuerySet"]
+
+    subgraph tools["Optimization tools"]
+        direction TB
+        Select["select_related<br/>(JOIN for ForeignKey)"]
+        Prefetch["prefetch_related<br/>(2nd query for M2M)"]
+        Annotate["annotate / aggregate<br/>(group-by + counts)"]
+        Qobj["Q • F<br/>(complex conditions)"]
+    end
+
+    SQL[("Fewer round trips<br/>to PostgreSQL")]
+
+    Query --> tools --> SQL
+```
+
 ## 📚 Required Reading
 
 | Resource                                                                            | Section        | Time   |
