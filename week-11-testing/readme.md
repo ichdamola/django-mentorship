@@ -229,11 +229,28 @@ from .factories import TaskFactory
 @pytest.mark.django_db
 class TestTaskListView:
     def test_list_requires_auth(self, client):
+        """
+        Pre-req: `task_list` must be auth-protected (added in Week 09).
+        If you haven't done that step yet, either retrofit it now:
+
+            # tasks/views.py
+            from django.contrib.auth.mixins import LoginRequiredMixin
+            class TaskListView(LoginRequiredMixin, ListView):
+                ...
+
+        Or, for FBV-style views:
+            @login_required
+            def task_list(request): ...
+        """
         url = reverse('tasks:task_list')
         response = client.get(url)
 
+        # Use assertRedirects so the assertion catches both /login/ and
+        # /accounts/login/?next=... configurations.
+        from django.contrib.auth import REDIRECT_FIELD_NAME
         assert response.status_code == 302
-        assert '/login/' in response.url
+        assert REDIRECT_FIELD_NAME in response.url   # '?next=' is present
+        assert 'login' in response.url.lower()
 
     def test_list_shows_user_tasks_only(self, client):
         user = UserFactory()

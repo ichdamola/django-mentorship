@@ -27,7 +27,24 @@ flowchart LR
 
 ## Project Options
 
-Choose ONE of the following projects:
+The default capstone is to **harden and finish TaskMaster** — the app you've been incrementally building from Week 03. That choice preserves the 15 weeks of investment and gives you a portfolio piece tied directly to the curriculum's architecture diagram.
+
+If you'd rather start fresh on a different domain — totally fine; the skills transfer. Pick ONE of the options below instead.
+
+### Option 0 (default): TaskMaster — productionize and extend
+
+Take TaskMaster from "works on my machine" to "production-deployable":
+
+- **Multi-user with isolation.** Owner-based queryset filtering on every view (already wired in Week 09).
+- **Real-time updates.** Add Django Channels + WebSockets so task changes push to other open browsers without refresh.
+- **Recurring tasks.** A `RecurringTaskTemplate` model + a Celery beat schedule (Week 14) that materializes due instances daily.
+- **Webhooks out.** When a task is created/updated/completed, POST to a user-configured URL (with HMAC signing — see Week 09 patterns).
+- **Public read-only sharing.** Signed-URL share links for individual tasks or filtered lists.
+- **Analytics dashboard.** Aggregations from Week 12 (annotated query sets, time-series charts).
+- **Containerized + deployed** per Week 15.
+- **CI/CD.** GitHub Actions running tests + ruff + a deploy on green main.
+
+The success criterion: a public URL you can demo to someone who's never seen the codebase, plus a `README` in the repo that walks through architecture and demos the key flows.
 
 ### Option A: Blog Platform
 

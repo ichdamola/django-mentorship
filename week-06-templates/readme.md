@@ -1020,6 +1020,24 @@ def task_stats():
         'pending': Task.objects.filter(status=Status.PENDING).count(),
         'in_progress': Task.objects.filter(status=Status.IN_PROGRESS).count(),
     }
+```
+
+And the template the tag renders — create `tasks/templates/tasks/_task_stats.html`:
+
+```django
+{# tasks/templates/tasks/_task_stats.html #}
+<div class="task-stats">
+    <div class="stat"><span class="label">Total</span><span class="value">{{ total }}</span></div>
+    <div class="stat"><span class="label">Completed</span><span class="value">{{ completed }}</span></div>
+    <div class="stat"><span class="label">Pending</span><span class="value">{{ pending }}</span></div>
+    <div class="stat"><span class="label">In progress</span><span class="value">{{ in_progress }}</span></div>
+</div>
+```
+
+Without that file, `{% task_stats %}` raises `TemplateDoesNotExist`.
+
+```python
+# Back to the template tags module — continuing with ASSIGNMENT TAGS below.
 
 
 # ============================================================

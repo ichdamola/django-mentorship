@@ -162,8 +162,8 @@ def invalidate_category_cache(sender, **kwargs):
 ### Database Optimization
 
 ```python
-# Connection pooling with dj-database-url
-uv add dj-database-url psycopg2-binary
+# Persistent connections vs. real pooling
+uv add dj-database-url 'psycopg[binary]'
 
 # config/settings.py
 import dj_database_url
@@ -171,13 +171,19 @@ import dj_database_url
 DATABASES = {
     'default': dj_database_url.config(
         default='postgres://user:pass@localhost/dbname',
-        conn_max_age=600,  # Connection pooling
+        conn_max_age=600,  # PERSISTENT connections — keeps each worker's
+                           # connection alive for 600s between requests
+                           # instead of opening/closing per request.
     )
 }
-
-# Persistent connections
-DATABASES['default']['CONN_MAX_AGE'] = 600
 ```
+
+> ⚠️ **CONN_MAX_AGE is not connection pooling — it's persistent connections.** They're related but distinct:
+>
+> - **Persistent connections (`CONN_MAX_AGE`):** each Gunicorn/uWSGI worker keeps *one* DB connection open across requests. Cheap. Built into Django. Avoids the per-request connect/auth/SSL overhead.
+> - **Real connection pooling:** a shared pool that multiple workers/processes draw from. Provided by **PgBouncer** (external process) or **Django 5.1+'s `OPTIONS={'pool': True}`** (in-process via psycopg3). Crucial when you have *many* workers and Postgres' `max_connections` limit becomes a bottleneck.
+>
+> For a single-host blog, `CONN_MAX_AGE=600` is enough. For multi-host production with 50+ Gunicorn workers per host, add PgBouncer in front.
 
 ### Performance Profiling
 

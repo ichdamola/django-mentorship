@@ -182,16 +182,20 @@ Create `.env`:
 ```
 DEBUG=True
 SECRET_KEY=your-secret-key-here
+ALLOWED_HOSTS=localhost,127.0.0.1
 ```
 
 Update `config/settings.py`:
 
 ```python
-from decouple import config
+from decouple import config, Csv
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 ```
+
+> ⚠️ **Why ALLOWED_HOSTS now, not week 15?** The first time you flip `DEBUG=False`, Django refuses every request with `DisallowedHost` unless `ALLOWED_HOSTS` is populated. Better to wire it from the start than debug it under deploy pressure.
 
 ---
 

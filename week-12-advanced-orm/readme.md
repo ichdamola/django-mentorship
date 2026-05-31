@@ -100,10 +100,15 @@ Task.objects.annotate(
 
 ```python
 from django.db.models import Q, F, Case, When, Value
+from django.utils import timezone
 
-# OR conditions
+# OR conditions — "high priority OR overdue (derived, not a stored status)"
+# `Status` only has PENDING/IN_PROGRESS/COMPLETED/CANCELLED — "overdue" is a
+# computed condition, not a stored value. This is a more honest demonstration
+# of why Q exists in the first place.
 Task.objects.filter(
-    Q(priority=Priority.HIGH) | Q(status=Status.OVERDUE)
+    Q(priority=Priority.HIGH)
+    | (Q(due_date__lt=timezone.now().date()) & ~Q(status=Status.COMPLETED))
 )
 
 # NOT conditions

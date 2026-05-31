@@ -198,6 +198,16 @@ class Task(models.Model):
         help_text="Task category"
     )
 
+    # Many-to-many: a task can have many tags, a tag tags many tasks.
+    # Tag is defined below — Django resolves the forward reference at
+    # class-creation time.
+    tags = models.ManyToManyField(
+        "Tag",
+        blank=True,
+        related_name="tasks",
+        help_text="Tags for this task",
+    )
+
     class Meta:
         ordering = ["-created_at"]  # Newest first
         indexes = [
@@ -237,18 +247,6 @@ class Tag(models.Model):
 
     def __str__(self) -> str:
         return self.name
-
-
-# Add many-to-many field to Task (can also be defined inline)
-Task.add_to_class(
-    'tags',
-    models.ManyToManyField(
-        Tag,
-        blank=True,
-        related_name="tasks",
-        help_text="Tags for this task"
-    )
-)
 ```
 
 ---
@@ -276,7 +274,8 @@ Task.add_to_class(
 │                                                                  │
 │  BOOLEAN FIELDS                                                  │
 │  ├── BooleanField()              BOOLEAN (required)              │
-│  └── NullBooleanField()          BOOLEAN (nullable) - deprecated │
+│  └── BooleanField(null=True)     BOOLEAN (nullable) — use this   │
+│      (NullBooleanField was REMOVED in Django 5.0)                │
 │                                                                  │
 │  DATE/TIME FIELDS                                                │
 │  ├── DateField()                 DATE                            │

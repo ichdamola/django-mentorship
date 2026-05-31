@@ -187,11 +187,13 @@ send_task_reminder.apply_async(
 result = process_import.delay('/path/to/file.csv')
 print(result.get(timeout=30))
 
-# Chain tasks
+# Chain tasks — output of step 1 is passed as first arg to step 2.
+# Both tasks must be @shared_task-decorated and importable. Here we chain
+# the import task into send_task_reminder (defined above) for a working example.
 from celery import chain
 chain(
     process_import.s('/file.csv'),
-    send_notification.s(user_id=1),
+    send_task_reminder.s(),   # task_id flows from process_import's return value
 )()
 ```
 
@@ -212,6 +214,12 @@ uv run celery -A config worker -B -l info
 ```
 
 ### Django Async Views
+
+Install the async HTTP client first:
+
+```bash
+uv add httpx
+```
 
 ```python
 # views.py

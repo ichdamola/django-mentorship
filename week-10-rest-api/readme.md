@@ -50,6 +50,7 @@ uv add djangorestframework
 INSTALLED_APPS = [
     ...
     'rest_framework',
+    'rest_framework.authtoken',   # required for TokenAuthentication
 ]
 
 REST_FRAMEWORK = {
@@ -64,6 +65,14 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 ```
+
+After installing `'rest_framework.authtoken'`, run migrations so the `authtoken_token` table exists:
+
+```bash
+python manage.py migrate
+```
+
+Without those two steps, every request that tries to authenticate by token will silently fail (the lookup against the missing table raises and DRF falls through to anonymous).
 
 ---
 

@@ -133,7 +133,7 @@ def profile(request):
 
 ```python
 # accounts/urls.py
-from django.urls import path
+from django.urls import path, reverse_lazy
 from django.contrib.auth import views as auth_views
 from . import views
 
@@ -145,10 +145,26 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('profile/', views.profile, name='profile'),
 
-    # Password reset
-    path('password-reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
+    # Password reset — because we're inside `app_name = 'accounts'`, the
+    # default URL names (`password_reset_done`, `password_reset_complete`)
+    # get prefixed to `accounts:password_reset_done` etc. The built-in views
+    # default `success_url` to the *unnamespaced* name, so we must override
+    # `success_url` explicitly or the redirect lookup fails.
+    path(
+        'password-reset/',
+        auth_views.PasswordResetView.as_view(
+            success_url=reverse_lazy('accounts:password_reset_done'),
+        ),
+        name='password_reset',
+    ),
     path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
-    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path(
+        'reset/<uidb64>/<token>/',
+        auth_views.PasswordResetConfirmView.as_view(
+            success_url=reverse_lazy('accounts:password_reset_complete'),
+        ),
+        name='password_reset_confirm',
+    ),
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
 ]
 ```
@@ -248,16 +264,76 @@ class TaskDeleteView(PermissionRequiredMixin, DeleteView):
 
 ### User-Specific Data
 
+You're about to add a `ForeignKey` to a model that already has rows (the tasks from Week 04). A naive `models.ForeignKey(..., on_delete=CASCADE)` is **non-null** — `migrate` will fail or prompt for a one-off default that assigns every existing task to a single user (wrong).
+
+There are three correct ways to do this. **Pick one** and follow it through:
+
+**Option A — fresh start (simplest if you're solo).** Wipe the dev database and re-seed:
+
+```bash
+rm db.sqlite3
+rm -rf tasks/migrations
+python manage.py makemigrations tasks   # generates a clean 0001 with owner included
+python manage.py migrate
+python manage.py createsuperuser
+```
+
+**Option B — nullable first, then a data migration.** Production-safe pattern:
+
 ```python
-# Add owner to Task model
+# Step 1: nullable FK
 class Task(models.Model):
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='tasks'
+        related_name='tasks',
+        null=True,             # ← key: nullable for the migration step
+        blank=True,
     )
     ...
+```
 
+Generate the migration, then create a data migration to backfill:
+
+```bash
+python manage.py makemigrations tasks
+python manage.py makemigrations --empty tasks --name backfill_task_owners
+```
+
+In `tasks/migrations/0003_backfill_task_owners.py`:
+
+```python
+from django.db import migrations
+from django.conf import settings
+
+def assign_owners(apps, schema_editor):
+    User = apps.get_model(settings.AUTH_USER_MODEL.split('.', 1))
+    Task = apps.get_model('tasks', 'Task')
+    superuser = User.objects.filter(is_superuser=True).first()
+    if superuser:
+        Task.objects.filter(owner__isnull=True).update(owner=superuser)
+
+class Migration(migrations.Migration):
+    dependencies = [('tasks', '0002_task_owner')]
+    operations = [migrations.RunPython(assign_owners, migrations.RunPython.noop)]
+```
+
+Then a third migration flips `null=False`:
+
+```python
+class Task(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='tasks',
+    )   # null=True removed
+```
+
+**Option C — accept the one-off default during migrate**: when Django prompts you, pick option `1` and supply `1` (the superuser's PK). Only do this if you're certain the dev DB has one superuser and you don't care about the existing tasks.
+
+Once `owner` is in place, the view code is:
+
+```python
 # Filter by user in views
 class TaskListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
