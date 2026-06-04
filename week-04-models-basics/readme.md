@@ -538,8 +538,14 @@ complex_query = Task.objects.filter(
 # Get tasks where updated_at > created_at
 modified = Task.objects.filter(updated_at__gt=F('created_at'))
 
-# Increase all priorities by 1
-Task.objects.update(priority=F('priority') + 1)
+# Increase all priorities by 1 — but URGENT (4) → 5 is OUTSIDE Priority's
+# choices and `Priority(self.priority).label` (see priority_display above)
+# will then raise ValueError. To stay safe, exclude already-max rows OR
+# clamp with Greatest/Least:
+Task.objects.exclude(priority=Priority.URGENT).update(priority=F('priority') + 1)
+# Note: in-memory Task instances held by the caller still show the OLD
+# priority value after an .update() — re-fetch with .refresh_from_db()
+# if you need the new value.
 
 # Exists check (more efficient than count)
 has_urgent = Task.objects.filter(priority=Priority.URGENT).exists()

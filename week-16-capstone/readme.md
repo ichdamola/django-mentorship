@@ -33,18 +33,26 @@ If you'd rather start fresh on a different domain — totally fine; the skills t
 
 ### Option 0 (default): TaskMaster — productionize and extend
 
-Take TaskMaster from "works on my machine" to "production-deployable":
+Take TaskMaster from "works on my machine" to "production-deployable" using **only what weeks 01-15 taught**:
 
-- **Multi-user with isolation.** Owner-based queryset filtering on every view (already wired in Week 09).
-- **Real-time updates.** Add Django Channels + WebSockets so task changes push to other open browsers without refresh.
+**Core requirements (all reachable from the curriculum):**
+
+- **Multi-user with isolation.** Owner-based queryset filtering on every view (Week 09).
+- **REST API.** Owner-scoped ViewSets, throttling, CORS, token auth (Week 10).
 - **Recurring tasks.** A `RecurringTaskTemplate` model + a Celery beat schedule (Week 14) that materializes due instances daily.
-- **Webhooks out.** When a task is created/updated/completed, POST to a user-configured URL (with HMAC signing — see Week 09 patterns).
-- **Public read-only sharing.** Signed-URL share links for individual tasks or filtered lists.
-- **Analytics dashboard.** Aggregations from Week 12 (annotated query sets, time-series charts).
-- **Containerized + deployed** per Week 15.
-- **CI/CD.** GitHub Actions running tests + ruff + a deploy on green main.
+- **Public read-only sharing.** Use `django.core.signing.TimestampSigner` to mint expiring share links: `signer.sign_object({'task_id': pk}, ...)`. The view checks the signature with `signer.unsign_object(token, max_age=...)`. See [Django's signing docs](https://docs.djangoproject.com/en/stable/topics/signing/) for the 30-min crash course; it's stdlib Django.
+- **Analytics dashboard.** Aggregations from Week 12 (annotated querysets, time-series charts).
+- **Caching + N+1 hygiene.** Per-user keys for any user-scoped cache (Week 13 warning), `select_related`/`prefetch_related` on list views, `assertNumQueries` regression tests.
+- **Containerized + deployed** per Week 15 — with `DJANGO_SETTINGS_MODULE=config.settings.production` set, `CSRF_TRUSTED_ORIGINS` configured, and the `X-Forwarded-Proto` story matched to your TLS termination point.
+- **CI/CD.** GitHub Actions running tests + ruff + a deploy on green main (Week 15).
 
-The success criterion: a public URL you can demo to someone who's never seen the codebase, plus a `README` in the repo that walks through architecture and demos the key flows.
+**Stretch (NOT reachable from this curriculum — pick one and learn it standalone if you want):**
+
+- **Real-time updates via Django Channels + WebSockets.** Channels was *not* covered in weeks 01-15. Reach for [the Channels tutorial](https://channels.readthedocs.io/en/stable/tutorial/) and budget ~1 week. Polling with `setInterval` + the existing REST endpoints is the pragmatic substitute.
+- **Outbound webhooks with HMAC signing.** Not covered. Read [Stripe's webhook signing docs](https://stripe.com/docs/webhooks/signatures) and use `hmac.compare_digest`; ~1 day of focused work. Without HMAC, the webhook is unauthenticated to the receiver.
+- **Server-Sent Events for live counts.** Simpler than Channels for "push something to one client"; uses standard HTTP, no extra dependency.
+
+The success criterion: a public URL you can demo to someone who's never seen the codebase, plus a `README` in the repo that walks through architecture and demos the key flows. The stretch items are bonuses, not requirements — the core list above is the bar.
 
 ### Option A: Blog Platform
 

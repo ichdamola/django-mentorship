@@ -111,15 +111,23 @@ def send_task_reminder(task_id: int) -> str:
     """Send email reminder for a task."""
     try:
         task = Task.objects.get(pk=task_id)
-        send_mail(
-            subject=f'Reminder: {task.title}',
-            message=f'Your task "{task.title}" is due on {task.due_date}',
-            from_email='noreply@taskmaster.com',
-            recipient_list=[task.owner.email],
-        )
-        return f'Reminder sent for task {task_id}'
     except Task.DoesNotExist:
         return f'Task {task_id} not found'
+
+    if not task.owner.email:
+        # Skip: no email collected at signup. (Week 09's CustomUserCreationForm
+        # has fields=('username', 'email') to prevent this; older accounts may
+        # still lack one.) Returning rather than calling send_mail with an
+        # empty recipient avoids SMTPRecipientsRefused + endless Celery retries.
+        return f'Skipped task {task_id}: owner has no email on file'
+
+    send_mail(
+        subject=f'Reminder: {task.title}',
+        message=f'Your task "{task.title}" is due on {task.due_date}',
+        from_email='noreply@taskmaster.com',
+        recipient_list=[task.owner.email],
+    )
+    return f'Reminder sent for task {task_id}'
 
 
 @shared_task(
@@ -134,6 +142,20 @@ def process_import(self, file_path: str) -> dict:
         return {'status': 'success', 'records': 100}
     except Exception as exc:
         raise self.retry(exc=exc)
+
+
+@shared_task
+def create_task_for_user(payload: dict, user_id: int) -> int:
+    """Create a Task from import payload; return the new task_id.
+    Designed to chain into send_task_reminder."""
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    user = User.objects.get(pk=user_id)
+    task = Task.objects.create(
+        title=f"Imported: {payload.get('source', 'unknown')}",
+        owner=user,
+    )
+    return task.pk      # ← int, suitable as send_task_reminder's first arg
 
 
 @shared_task
@@ -187,13 +209,16 @@ send_task_reminder.apply_async(
 result = process_import.delay('/path/to/file.csv')
 print(result.get(timeout=30))
 
-# Chain tasks — output of step 1 is passed as first arg to step 2.
-# Both tasks must be @shared_task-decorated and importable. Here we chain
-# the import task into send_task_reminder (defined above) for a working example.
+# Chain tasks — output of step N becomes first arg of step N+1.
+# Each task must accept the previous task's return type as its first arg.
+# Note: process_import returns a dict {status, records}; send_task_reminder
+# needs an int task_id. We bridge them with create_task_for_user, which
+# accepts a dict and returns the new task's pk.
 from celery import chain
 chain(
     process_import.s('/file.csv'),
-    send_task_reminder.s(),   # task_id flows from process_import's return value
+    create_task_for_user.s(user_id=request.user.pk),  # dict in → int out
+    send_task_reminder.s(),                            # int in → reminder sent
 )()
 ```
 
@@ -209,9 +234,24 @@ uv run celery -A config beat -l info
 # Start Flower (monitoring)
 uv run celery -A config flower
 
-# All in one (development)
+# All in one (development ONLY — never in production)
+# `-B` runs the beat scheduler embedded in the worker. Convenient locally,
+# unsafe in prod: if the worker dies, scheduled jobs stop firing. In
+# production, run `celery beat` as a separate process / container.
 uv run celery -A config worker -B -l info
 ```
+
+### Testing Celery tasks
+
+In tests, set `CELERY_TASK_ALWAYS_EAGER = True` to execute tasks synchronously in-process — no broker needed:
+
+```python
+# config/settings/test.py  (or override at the test class level)
+CELERY_TASK_ALWAYS_EAGER = True
+CELERY_TASK_EAGER_PROPAGATES = True   # surface task errors as test failures
+```
+
+Without this, `send_task_reminder.delay(...)` in a test enqueues to a broker that doesn't exist and the test hangs or silently never runs the task.
 
 ### Django Async Views
 

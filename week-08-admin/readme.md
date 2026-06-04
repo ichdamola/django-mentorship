@@ -78,7 +78,9 @@ class TaskAttachmentInline(admin.TabularInline):
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
     list_display = ['title', 'status', 'priority', 'category', 'due_date', 'is_overdue']
-    list_filter = ['status', 'priority', 'category', 'created_at', 'OverdueFilter']
+    list_filter = ['status', 'priority', 'category', 'created_at']
+    # ↑ Part 2 below adds the `OverdueFilter` class; reference it by class
+    #   (NOT a string) once it's defined: `list_filter = [..., OverdueFilter]`.
     search_fields = ['title', 'description']
     list_editable = ['status', 'priority']
     list_select_related = ['category']   # avoids N+1 on list view (see Week 12)
@@ -170,7 +172,7 @@ class OverdueFilter(SimpleListFilter):
         return queryset
 ```
 
-Add it to `list_filter` (already done above as `'OverdueFilter'` — pass the **class**, not a string):
+Add it to `list_filter` — pass the **class**, not a string:
 
 ```python
 class TaskAdmin(admin.ModelAdmin):
@@ -223,6 +225,13 @@ Two non-obvious things about actions:
 
 ## Part 4: Admin permissions
 
+> ⚠️ **Pre-req: requires `Task.owner` from Week 09.** The examples in Parts
+> 4 and 5 reference `obj.owner` and `request.user`. If you're walking the
+> curriculum linearly, **come back here after you complete Week 09's owner
+> FK migration.** Until then, skip to Part 6. Trying to run this admin
+> against the Week 04 `Task` model raises `FieldError: Cannot resolve
+> keyword 'owner' into field`.
+
 By default every staff user with `is_staff=True` can see the admin and act on models they have permissions for. Three permission classes are auto-generated per model: `add_taskname`, `change_taskname`, `delete_taskname`, `view_taskname`.
 
 For finer-grained control, override the permission hooks:
@@ -263,7 +272,23 @@ class TaskAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 ```
 
-For inlines (the attachments attached to the Task), `save_formset` is the equivalent:
+For inlines (the attachments attached to the Task), `save_formset` is the equivalent. The example below assumes you've added an `uploaded_by` FK to `TaskAttachment` — Week 07's model only has `(task, file, uploaded_at)`, so add this field first:
+
+```python
+# tasks/models.py — extend TaskAttachment if you want save_formset auditing
+class TaskAttachment(models.Model):
+    task = models.ForeignKey(Task, related_name='attachments', on_delete=models.CASCADE)
+    file = models.FileField(upload_to='task_attachments/%Y/%m/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    uploaded_by = models.ForeignKey(                                  # ← add this
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='uploaded_attachments',
+    )
+```
+
+Then the admin hook:
 
 ```python
     def save_formset(self, request, form, formset, change):

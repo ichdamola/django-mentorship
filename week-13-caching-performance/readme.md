@@ -61,7 +61,10 @@ CACHES = {
 }
 
 # Session backend (optional)
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+# For production, prefer `cached_db` over `cache` — Redis restarts otherwise
+# log every active user out. cached_db reads from cache, falls back to DB,
+# writes to both.
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 SESSION_CACHE_ALIAS = 'default'
 ```
 
@@ -73,26 +76,28 @@ SESSION_CACHE_ALIAS = 'default'
 
 ```python
 from django.views.decorators.cache import cache_page, cache_control
+from django.views.decorators.vary import vary_on_cookie
 from django.utils.decorators import method_decorator
 
-# Cache entire view for 15 minutes
+# 🚨 NEVER do this on a user-scoped view:
+#   @cache_page(60 * 15)
+#   def task_list(request):
+#       return ...filter(owner=request.user)
+# `cache_page` keys on URL + a few headers — NOT on request.user. The first
+# user's response is served to everyone else for 15 minutes. Privacy disaster.
+
+# ✅ Safe: cache_page is fine on PUBLIC views (homepage, marketing pages,
+# public catalogue) where the response doesn't depend on who's logged in.
 @cache_page(60 * 15)
-def task_list(request):
+def public_homepage(request):
     ...
 
-# Cache with cache control headers
-@cache_control(private=True, max_age=300)
+# ✅ For per-user caching, use the low-level cache API with user.id in the
+# key (see "Low-Level Cache API" below). cache_page + vary_on_cookie works
+# in theory but the cache hit rate collapses because each session cookie is
+# unique — you're paying cache storage without amortizing across users.
+@cache_control(private=True, max_age=300)   # browser cache only; never server-cache
 def user_dashboard(request):
-    ...
-
-# Class-based views
-@method_decorator(cache_page(60 * 15), name='dispatch')
-class TaskListView(ListView):
-    ...
-
-# Per-user caching
-@cache_page(60 * 15, key_prefix='user')
-def user_tasks(request):
     ...
 ```
 
@@ -110,6 +115,11 @@ def get_expensive_data():
     return Task.objects.count()
 
 count = cache.get_or_set('task_count', get_expensive_data, timeout=60)
+# Cache stampede / thundering herd: when a hot key expires, N concurrent
+# requests all miss simultaneously and all run `get_expensive_data()`.
+# For high-traffic keys, add jittered expiry (`timeout + random.randint(0, 60)`)
+# or use a distributed lock (`from redis import Redis; r.set(..., nx=True, ex=...)`)
+# so only one worker repopulates while the rest wait.
 
 # Delete
 cache.delete('my_key')
@@ -191,13 +201,25 @@ DATABASES = {
 # Install django-silk for profiling
 uv add --dev django-silk
 
-# config/settings.py
-INSTALLED_APPS += ['silk']
-MIDDLEWARE += ['silk.middleware.SilkyMiddleware']
+# config/settings.py — dev only
+if DEBUG:
+    INSTALLED_APPS += ['silk']
+    MIDDLEWARE += ['silk.middleware.SilkyMiddleware']
+    # Restrict the silk UI to superusers (Silk records ALL SQL + request
+    # bodies + headers including auth tokens; do NOT expose to anonymous
+    # or staff-tier users):
+    SILKY_AUTHENTICATION = True
+    SILKY_AUTHORISATION = True
+    SILKY_PERMISSIONS = lambda user: user.is_superuser
 
 # config/urls.py
-urlpatterns += [path('silk/', include('silk.urls'))]
+if settings.DEBUG:
+    urlpatterns += [path('silk/', include('silk.urls'))]
 ```
+
+> 🚨 **Never deploy Silk-enabled middleware to production.** It logs every
+> request including bodies + auth headers. Same risk class as Debug Toolbar
+> in production.
 
 ---
 

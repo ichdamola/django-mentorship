@@ -63,8 +63,57 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    # Throttle anonymous + authenticated traffic. Without this, a single
+    # script can drain your DB. Adjust rates to your traffic profile.
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '60/min',
+        'user': '600/min',
+    },
 }
 ```
+
+### CORS (browser frontends only)
+
+If your API is called from a browser at a different origin (a separate React/Vue/Svelte app), install and configure CORS:
+
+```bash
+uv add django-cors-headers
+```
+
+```python
+INSTALLED_APPS += ['corsheaders']
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',   # high in the list
+    *MIDDLEWARE,
+]
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',         # Vite dev server
+    'https://app.taskmaster.com',    # your prod frontend
+]
+CORS_ALLOW_CREDENTIALS = True   # if session cookies cross the origin
+```
+
+> ⚠️ **`CORS_ALLOW_ALL_ORIGINS = True` plus `CORS_ALLOW_CREDENTIALS = True` is a security bug.** Pick explicit allowed origins or pick the no-credentials path. See [appsec-mentorship week 9](https://github.com/ichdamola/appsec-mentorship/tree/main/week-09-csrf-cors-sop) for the deeper version.
+
+### Token endpoint
+
+The `authtoken` migration creates the storage table; you also need an endpoint that mints tokens for users:
+
+```python
+# config/urls.py
+from rest_framework.authtoken.views import obtain_auth_token
+urlpatterns += [
+    path('api/v1/auth/token/', obtain_auth_token),
+]
+```
+
+Then `POST /api/v1/auth/token/` with `{"username": ..., "password": ...}` returns `{"token": "..."}`. Send it on subsequent requests as `Authorization: Token <value>`.
+
+Note: DRF's built-in tokens never expire. For real apps consider **`djangorestframework-simplejwt`** (JWTs with refresh tokens) or **`dj-rest-auth`** (a full auth API package).
 
 After installing `'rest_framework.authtoken'`, run migrations so the `authtoken_token` table exists:
 
@@ -102,15 +151,19 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class TaskSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
+    # category_id and tag_ids need a per-request queryset so users can't
+    # attach another user's Category/Tag (IDOR). Default behavior of
+    # `queryset=Category.objects.all()` would allow it. The
+    # get_fields() override below scopes the FK to the requesting user.
     category_id = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(),
+        queryset=Category.objects.none(),    # ← real queryset set in get_fields()
         source='category',
         write_only=True,
         required=False
     )
     tags = TagSerializer(many=True, read_only=True)
     tag_ids = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(),
+        queryset=Tag.objects.none(),
         source='tags',
         write_only=True,
         many=True,
@@ -128,6 +181,14 @@ class TaskSerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at']
+
+    def get_fields(self):
+        fields = super().get_fields()
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            fields['category_id'].queryset = Category.objects.filter(owner=request.user)
+            fields['tag_ids'].queryset = Tag.objects.filter(owner=request.user)
+        return fields
 ```
 
 ### ViewSets
@@ -172,16 +233,40 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.annotate(task_count=Count('tasks'))
+    """Owner-scoped — a user only sees / writes / deletes their OWN categories."""
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        # Scope to the requesting user. Without this any authenticated user
+        # can read, modify, or delete anyone's categories (IDOR).
+        return Category.objects.filter(
+            owner=self.request.user
+        ).annotate(task_count=Count('tasks'))
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
 
 class TagViewSet(viewsets.ModelViewSet):
-    queryset = Tag.objects.all()
+    """Owner-scoped — same rationale as CategoryViewSet."""
     serializer_class = TagSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Tag.objects.filter(owner=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 ```
+
+> 📝 **Requires `Category.owner` and `Tag.owner` fields.** Week 04 introduced
+> `Category` and `Tag` as shared dimension tables. To owner-scope them you'd
+> add a `models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)`
+> column on each (same migration pattern as Week 09's `Task.owner`). If you
+> intentionally want shared categories/tags (a multi-tenant team-scoped
+> taxonomy), make these viewsets `ReadOnlyModelViewSet` and lock writes to
+> `IsAdminUser` — anything in between leaks data across users.
 
 ### URL Routing
 
@@ -203,6 +288,17 @@ urlpatterns = [
     path('api/v1/', include('tasks.urls_api')),
 ]
 ```
+
+### API versioning
+
+The `/api/v1/` prefix above is **URL path versioning** — the simplest scheme. When you ship a v2, mount a separate URL conf:
+
+```python
+path('api/v1/', include('tasks.urls_api')),
+path('api/v2/', include('tasks.urls_api_v2')),
+```
+
+Both versions stay live until v1 consumers migrate. DRF also supports header-based versioning (`AcceptHeaderVersioning`) and namespace versioning — see DRF's [versioning docs](https://www.django-rest-framework.org/api-guide/versioning/) for when each fits.
 
 ### API Endpoints
 

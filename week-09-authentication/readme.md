@@ -70,9 +70,29 @@ INSTALLED_APPS = [
 ]
 
 AUTH_USER_MODEL = 'accounts.User'  # ← add this line BEFORE you run migrate
+
+# Auth flow URLs — set these so @login_required and PasswordResetView
+# redirect to the correctly namespaced auth pages.
+LOGIN_URL = 'accounts:login'
+LOGIN_REDIRECT_URL = 'accounts:profile'
+LOGOUT_REDIRECT_URL = 'accounts:login'
+
+# Email backend for dev: print emails to console instead of trying SMTP.
+# Without this, PasswordResetView raises ConnectionRefusedError on most
+# dev machines. Switch to SMTP (or Celery + sendgrid in Week 14) for prod.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'noreply@taskmaster.local'
 ```
 
-#### Step 3: Define the custom user
+#### Step 3: Install Pillow (required for ImageField)
+
+```bash
+uv add pillow
+```
+
+Pillow is what Django uses internally to validate uploaded images. Without it, `ImageField` raises an error at `makemigrations` time.
+
+#### Step 4: Define the custom user
 
 ```python
 # accounts/models.py
@@ -82,6 +102,7 @@ from django.db import models
 
 class User(AbstractUser):
     """Custom user model - extend as needed."""
+    email = models.EmailField(unique=True)   # required so password reset + week 14 Celery emails work
     bio = models.TextField(blank=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True)
 
@@ -89,7 +110,7 @@ class User(AbstractUser):
         return self.email or self.username
 ```
 
-#### Step 4: Create and apply migrations
+#### Step 5: Create and apply migrations
 
 ```bash
 uv run python manage.py makemigrations accounts
@@ -110,8 +131,11 @@ class CustomUserCreationForm(UserCreationForm):
     # UserCreationForm.Meta.model is hard-coded to auth.User, which is
     # swapped out once AUTH_USER_MODEL is set — using it as-is raises
     # "Manager isn't available; 'auth.User' has been swapped". Override.
+    # Also: collect email at signup so password reset + transactional
+    # email work end-to-end (Week 14 Celery emails depend on this).
     class Meta(UserCreationForm.Meta):
         model = get_user_model()
+        fields = ("username", "email")
 
 
 def register(request):
@@ -307,7 +331,7 @@ from django.db import migrations
 from django.conf import settings
 
 def assign_owners(apps, schema_editor):
-    User = apps.get_model(settings.AUTH_USER_MODEL.split('.', 1))
+    User = apps.get_model(settings.AUTH_USER_MODEL)
     Task = apps.get_model('tasks', 'Task')
     superuser = User.objects.filter(is_superuser=True).first()
     if superuser:

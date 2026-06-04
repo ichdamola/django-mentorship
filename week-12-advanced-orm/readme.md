@@ -90,10 +90,19 @@ Category.objects.annotate(
     completed_count=Count('tasks', filter=Q(tasks__status='completed')),
 ).values('name', 'task_count', 'completed_count')
 
-# Computed fields
+# Computed fields — backend-aware: on Postgres `F('due_date') - timezone.now().date()`
+# returns an `interval`; on SQLite the result is a string and __lte=7 doesn't
+# work as expected. For portable code, wrap in ExpressionWrapper with an
+# explicit output_field:
+from django.db.models import DurationField, ExpressionWrapper
+from datetime import timedelta
+
 Task.objects.annotate(
-    days_until_due=F('due_date') - timezone.now().date()
-).filter(days_until_due__lte=7)
+    days_until_due=ExpressionWrapper(
+        F('due_date') - timezone.now().date(),
+        output_field=DurationField(),
+    )
+).filter(days_until_due__lte=timedelta(days=7))
 ```
 
 ### Complex Queries
@@ -272,12 +281,18 @@ from .factories import TaskFactory
 @pytest.mark.django_db
 def test_task_list_view_query_count(client, django_assert_num_queries):
     TaskFactory.create_batch(50)
-    with django_assert_num_queries(5):           # tasks + category + tags + 2 framework
+    # 2 queries: 1 for tasks (with category JOIN via select_related)
+    #            + 1 for tags (prefetch_related fires a second SELECT).
+    # If your view triggers session/auth queries (e.g., @login_required
+    # backed by SessionMiddleware), add those. Run once with
+    # django_assert_num_queries(0) to see the actual count in the failure
+    # message, then lock that number in.
+    with django_assert_num_queries(2):
         response = client.get(reverse('tasks:task_list'))
     assert response.status_code == 200
 ```
 
-The number `5` is the contract: future commits that regress to 50+ queries break the test loudly. This is how you keep N+1 from coming back six months later.
+The exact count is the contract: future commits that regress to 50+ queries break the test loudly. This is how you keep N+1 from coming back six months later.
 
 ---
 
@@ -501,7 +516,7 @@ for t in tasks_to_update:
 Task.objects.bulk_update(tasks_to_update, ['priority'], batch_size=1000)
 ```
 
-Caveats: `bulk_create` does NOT call `save()` (no signals, no `auto_now` field updates, no `pk` returned on databases other than Postgres). Use it when you know you don't need those.
+Caveats: `bulk_create` does NOT call `save()` — no signals, no `auto_now` field updates, and you should not rely on `pre_save` / `post_save` firing. PKs are populated on Postgres, SQLite (3.35+), MariaDB, and Oracle via `RETURNING` (Django 4.0+ for SQLite, broader since then). MySQL still doesn't unless you fetch them back. Use `bulk_create` when you know you don't need signals.
 
 ---
 

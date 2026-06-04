@@ -205,14 +205,29 @@ class TaskAttachmentForm(forms.ModelForm):
             raise forms.ValidationError(
                 f"File too large ({f.size // 1024} KB > {self.MAX_BYTES // 1024} KB)."
             )
-        # content_type is set by the client — trust but verify with magic bytes
-        # in production (see Week 12 of appsec-mentorship for the right pattern).
+
+        # ⚠️ This is the NAIVE check. f.content_type is whatever the client
+        # claimed. An attacker uploads evil.html with Content-Type: image/png
+        # and this passes. For real production, read the actual magic bytes:
+        #
+        #   uv add python-magic     # or `filetype` (pure-Python)
+        #
+        #   import magic
+        #   header = f.read(2048); f.seek(0)
+        #   actual = magic.from_buffer(header, mime=True)
+        #   if actual not in self.ALLOWED_TYPES:
+        #       raise forms.ValidationError(f"Detected MIME {actual} not allowed.")
+        #
+        # The client-MIME check below is kept as a fast first pass; magic-byte
+        # detection is the gate.
         if f.content_type not in self.ALLOWED_TYPES:
             raise forms.ValidationError(
                 f"Unsupported type: {f.content_type}. Allowed: {', '.join(self.ALLOWED_TYPES)}."
             )
         return f
 ```
+
+> 🚨 See [appsec-mentorship Week 12](https://github.com/ichdamola/appsec-mentorship/tree/main/week-12-xxe-upload-traversal) for the full upload-bypass attack catalog (double extension, magic-byte spoofing, polyglots, Image Tragick, XXE-via-SVG). Don't ship the client-MIME check alone to production.
 
 **Important:** a form that uploads files **must** set `enctype="multipart/form-data"` on the `<form>` tag, AND the view must pass `request.FILES` into the form:
 
@@ -341,11 +356,27 @@ When a form is too long for one screen (signup wizards, surveys, multi-page chec
 
 ```python
 # tasks/views.py
+from datetime import date, datetime
+from django.forms.models import model_to_dict
+
+def _jsonable(d: dict) -> dict:
+    """Django's default session serializer is JSON (since 1.6). dates and
+    datetimes raise TypeError. Cast to ISO strings before storing; parse
+    back on read."""
+    out = {}
+    for k, v in d.items():
+        if isinstance(v, (date, datetime)):
+            out[k] = v.isoformat()
+        else:
+            out[k] = v
+    return out
+
+
 def task_wizard_step_1(request):
     if request.method == 'POST':
         form = TaskBasicsForm(request.POST)
         if form.is_valid():
-            request.session['task_wizard_step1'] = form.cleaned_data
+            request.session['task_wizard_step1'] = _jsonable(form.cleaned_data)
             return redirect('tasks:wizard_step_2')
     else:
         form = TaskBasicsForm(initial=request.session.get('task_wizard_step1'))
@@ -360,7 +391,15 @@ def task_wizard_step_2(request):
         form = TaskDetailsForm(request.POST)
         if form.is_valid():
             step1 = request.session.pop('task_wizard_step1')
-            Task.objects.create(**step1, **form.cleaned_data)
+            # Filter to actual Task fields — extra cleaned_data keys (e.g.,
+            # a CAPTCHA CharField on the form) would TypeError on Task.__init__.
+            model_field_names = {f.name for f in Task._meta.get_fields()}
+            combined = {**step1, **form.cleaned_data}
+            kwargs = {k: v for k, v in combined.items() if k in model_field_names}
+            # Re-parse ISO date strings back into date objects
+            if isinstance(kwargs.get('due_date'), str):
+                kwargs['due_date'] = date.fromisoformat(kwargs['due_date'])
+            Task.objects.create(**kwargs)
             return redirect('tasks:task_list')
     else:
         form = TaskDetailsForm()

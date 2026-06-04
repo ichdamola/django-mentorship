@@ -527,7 +527,9 @@ def check_python_version() -> bool:
     """Verify Python version is 3.12+."""
     print("Checking Python version...", end=" ")
     version = sys.version_info
-    if version.major >= 3 and version.minor >= 12:
+    # Tuple comparison — `major >= 3 and minor >= 12` would reject Python
+    # 4.0 (minor 0 < 12) even though it satisfies "3.12+".
+    if version >= (3, 12):
         print(f"✅ Python {version.major}.{version.minor}.{version.micro}")
         return True
     print(f"❌ Python {version.major}.{version.minor} (need 3.12+)")

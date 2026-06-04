@@ -85,10 +85,17 @@ Start with this simpler version that doesn't need templates:
 # tasks/views.py - Simple version without templates
 from django.http import HttpRequest, HttpResponse, JsonResponse, Http404
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.html import escape, format_html
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import Task, Category, Status, Priority
 
+
+# 🚨 The pattern below — string-building HTML from user data — is a SECURITY
+# ANTI-PATTERN. We use `escape()` and `format_html()` here only because we
+# haven't taught templates yet. Switch to Option B / Week 06 templates
+# (which auto-escape by default) as soon as possible. NEVER ship raw
+# f-string HTML touching user input — that's stored XSS.
 
 def task_list(request: HttpRequest) -> HttpResponse:
     """List all tasks."""
@@ -99,15 +106,20 @@ def task_list(request: HttpRequest) -> HttpResponse:
     if status:
         tasks = tasks.filter(status=status)
 
-    # Build simple HTML response
+    # Build simple HTML response — escape() everything from the database.
     html = "<h1>Tasks</h1>"
     html += '<p><a href="?status=pending">Pending</a> | '
     html += '<a href="?status=completed">Completed</a> | '
     html += '<a href="?">All</a></p>'
     html += "<ul>"
 
-    for task in tasks[:20]:  # Limit to 20
-        html += f'<li><a href="/tasks/{task.pk}/">{task.title}</a> - {task.status}</li>'
+    for task in tasks[:20]:
+        # escape() converts <, >, &, ", ' to entities. Without it, a task
+        # titled `<img src=x onerror=alert(1)>` would execute when listed.
+        html += format_html(
+            '<li><a href="/tasks/{}/">{}</a> - {}</li>',
+            task.pk, task.title, task.status,
+        )
 
     html += "</ul>"
     html += '<p><a href="/tasks/create/">+ Create Task</a></p>'
@@ -119,16 +131,25 @@ def task_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """Show task details."""
     task = get_object_or_404(Task, pk=pk)
 
-    html = f"""
-    <h1>{task.title}</h1>
-    <p><strong>Status:</strong> {task.get_status_display()}</p>
-    <p><strong>Priority:</strong> {task.priority}</p>
-    <p><strong>Description:</strong> {task.description or 'No description'}</p>
-    <p><strong>Created:</strong> {task.created_at}</p>
-    <hr>
-    <a href="/tasks/">← Back to list</a> |
-    <a href="/tasks/{task.pk}/delete/">Delete</a>
-    """
+    # Same escaping rule — title and description come from user input.
+    html = format_html(
+        """
+        <h1>{title}</h1>
+        <p><strong>Status:</strong> {status}</p>
+        <p><strong>Priority:</strong> {priority}</p>
+        <p><strong>Description:</strong> {description}</p>
+        <p><strong>Created:</strong> {created}</p>
+        <hr>
+        <a href="/tasks/list/">← Back to list</a> |
+        <a href="/tasks/{pk}/delete/">Delete</a>
+        """,
+        title=task.title,
+        status=task.get_status_display(),
+        priority=task.priority,
+        description=task.description or 'No description',
+        created=task.created_at,
+        pk=task.pk,
+    )
 
     return HttpResponse(html)
 
@@ -169,7 +190,7 @@ def task_create(request: HttpRequest) -> HttpResponse:
         </p>
         <button type="submit">Create</button>
     </form>
-    <p><a href="/tasks/">← Back to list</a></p>
+    <p><a href="/tasks/list/">← Back to list</a></p>
     """
     return HttpResponse(html)
 
@@ -183,14 +204,17 @@ def task_delete(request: HttpRequest, pk: int) -> HttpResponse:
         task.delete()
         return redirect('tasks:task_list')
 
-    html = f"""
-    <h1>Delete Task</h1>
-    <p>Are you sure you want to delete "{task.title}"?</p>
-    <form method="post">
-        <button type="submit">Yes, Delete</button>
-        <a href="/tasks/{task.pk}/">Cancel</a>
-    </form>
-    """
+    html = format_html(
+        """
+        <h1>Delete Task</h1>
+        <p>Are you sure you want to delete "{title}"?</p>
+        <form method="post">
+            <button type="submit">Yes, Delete</button>
+            <a href="/tasks/{pk}/">Cancel</a>
+        </form>
+        """,
+        title=task.title, pk=task.pk,
+    )
     return HttpResponse(html)
 ```
 
@@ -257,7 +281,9 @@ def task_create(request: HttpRequest) -> HttpResponse:
         # Process form data
         title = request.POST.get('title')
         description = request.POST.get('description', '')
-        priority = request.POST.get('priority', Priority.MEDIUM)
+        # POST values are strings; Priority is an IntegerChoices. Cast to int
+        # or Postgres will raise "invalid input syntax for type integer".
+        priority = int(request.POST.get('priority', Priority.MEDIUM))
         category_id = request.POST.get('category')
 
         # Validation
@@ -656,7 +682,9 @@ urlpatterns = [
     path('list/', views.task_list, name='task_list'),
     path('create/', views.task_create, name='task_create'),
     path('<int:pk>/', views.task_detail, name='task_detail'),
-    path('<int:pk>/edit/', views.task_update, name='task_update'),
+    # Update lives on the CBV from Part 2 — no FBV equivalent in this week.
+    # Use the CBV's as_view() (CBVs need .as_view() to satisfy the URL resolver):
+    path('<int:pk>/edit/', views.TaskUpdateView.as_view(), name='task_update'),
     path('<int:pk>/delete/', views.task_delete, name='task_delete'),
 
     # Task actions

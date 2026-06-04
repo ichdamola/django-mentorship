@@ -120,7 +120,20 @@ class UserFactory(DjangoModelFactory):
 
     username = factory.Sequence(lambda n: f'user{n}')
     email = factory.LazyAttribute(lambda obj: f'{obj.username}@example.com')
-    password = factory.PostGenerationMethodCall('set_password', 'password123')
+
+    # `PostGenerationMethodCall('set_password', ...)` hashes the password on
+    # the instance AFTER save, so the in-memory object has it but the DB row
+    # doesn't. client.login() then fails because the DB has whatever Django
+    # auto-set. Use @post_generation + save() to persist.
+    @factory.post_generation
+    def password(obj, create, extracted, **kwargs):
+        if not create:
+            return
+        raw = extracted or 'password123'
+        obj.set_password(raw)
+        obj.save()
+        # Stash the raw password on the instance so tests can use it.
+        obj._raw_password = raw
 ```
 
 `get_user_model()` is used instead of importing `accounts.models.User` directly so
@@ -313,6 +326,73 @@ def api_client():
 def authenticated_client(client, user):
     client.force_login(user)
     return client
+```
+
+### Form Tests
+
+```python
+# tasks/tests/test_forms.py
+import pytest
+from tasks.forms import TaskForm
+
+@pytest.mark.django_db
+def test_clean_title_rejects_short_titles():
+    form = TaskForm(data={'title': 'no', 'priority': 2, 'status': 'pending'})
+    assert not form.is_valid()
+    assert 'title' in form.errors
+
+@pytest.mark.django_db
+def test_clean_rejects_completed_with_future_due_date():
+    from datetime import date, timedelta
+    form = TaskForm(data={
+        'title': 'finish report', 'priority': 2,
+        'status': 'completed',
+        'due_date': date.today() + timedelta(days=7),
+    })
+    assert not form.is_valid()
+    assert form.errors.get('__all__')   # non-field error from clean()
+```
+
+### Serializer Tests
+
+```python
+# tasks/tests/test_api_serializers.py
+import pytest
+from tasks.serializers import TaskSerializer
+
+@pytest.mark.django_db
+def test_serializer_rejects_other_users_category(user, other_user, category_factory):
+    other_cat = category_factory(owner=other_user)
+    request = type('Req', (), {'user': user})()
+    serializer = TaskSerializer(
+        data={'title': 't', 'category_id': other_cat.pk, 'priority': 2},
+        context={'request': request},
+    )
+    assert not serializer.is_valid()
+    assert 'category_id' in serializer.errors
+```
+
+### Admin action / Celery Tests
+
+```python
+# tasks/tests/test_celery.py
+import pytest
+from tasks.tasks import send_task_reminder
+
+@pytest.mark.django_db
+def test_send_task_reminder_skips_users_without_email(task_factory, user_factory):
+    user = user_factory(email='')
+    task = task_factory(owner=user)
+    result = send_task_reminder(task.pk)    # runs eagerly when CELERY_TASK_ALWAYS_EAGER=True
+    assert 'no email on file' in result
+```
+
+```python
+# conftest.py — set eager mode for all tests
+@pytest.fixture(autouse=True)
+def _celery_eager(settings):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 ```
 
 ### Running Tests

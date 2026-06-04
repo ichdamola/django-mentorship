@@ -253,6 +253,16 @@ Create `templates/includes/_messages.html`:
 {% endif %}
 ```
 
+> ⚠️ **Map Django's `error` tag to Bootstrap's `danger`.** By default,
+> `messages.error(...)` tags the message with `error` — Bootstrap has no
+> `alert-error` class (only `alert-danger`), so error messages render
+> unstyled. Add this to `config/settings.py`:
+>
+> ```python
+> from django.contrib.messages import constants as messages
+> MESSAGE_TAGS = {messages.ERROR: 'danger'}
+> ```
+
 Create `templates/includes/_footer.html`:
 
 ```html
@@ -275,7 +285,7 @@ Create `templates/includes/_pagination.html`:
     <li class="page-item">
       <a
         class="page-link"
-        href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+        href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key|urlencode }}={{ value|urlencode }}{% endif %}{% endfor %}"
       >
         &laquo; First
       </a>
@@ -283,7 +293,7 @@ Create `templates/includes/_pagination.html`:
     <li class="page-item">
       <a
         class="page-link"
-        href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+        href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key|urlencode }}={{ value|urlencode }}{% endif %}{% endfor %}"
       >
         Previous
       </a>
@@ -300,7 +310,7 @@ Create `templates/includes/_pagination.html`:
     <li class="page-item">
       <a
         class="page-link"
-        href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+        href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key|urlencode }}={{ value|urlencode }}{% endif %}{% endfor %}"
       >
         Next
       </a>
@@ -308,7 +318,7 @@ Create `templates/includes/_pagination.html`:
     <li class="page-item">
       <a
         class="page-link"
-        href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+        href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key|urlencode }}={{ value|urlencode }}{% endif %}{% endfor %}"
       >
         Last &raquo;
       </a>
@@ -1013,6 +1023,14 @@ def task_stats():
     Render task statistics.
 
     Usage: {% task_stats %}
+
+    ⚠️ This runs 4 COUNT queries every time it's rendered. If you put
+    {% task_stats %} in base.html, every page (including 404s) pays that
+    cost. For a real app: cache the dict for 30-60s (and remember Week 13's
+    per-user cache key rule if the counts ever become user-scoped):
+
+        from django.core.cache import cache
+        result = cache.get_or_set('task_stats:global', _compute, 60)
     """
     return {
         'total': Task.objects.count(),

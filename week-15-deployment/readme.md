@@ -50,10 +50,13 @@ flowchart LR
 # Dockerfile
 FROM python:3.12-slim
 
-# Set environment variables
+# Set environment variables. DJANGO_SETTINGS_MODULE MUST be set before
+# `collectstatic` runs below — otherwise it picks up dev.py which imports
+# `debug_toolbar`, which `--no-dev` just excluded.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    UV_SYSTEM_PYTHON=1
+    UV_SYSTEM_PYTHON=1 \
+    DJANGO_SETTINGS_MODULE=config.settings.production
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -92,7 +95,7 @@ CMD ["uv", "run", "gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000
 
 ```yaml
 # docker-compose.yml
-version: "3.8"
+# (no `version:` key — deprecated in Compose v2+)
 
 services:
   web:
@@ -100,8 +103,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DEBUG=False
+      - DJANGO_SETTINGS_MODULE=config.settings.production
       - SECRET_KEY=${SECRET_KEY}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS}
       - DATABASE_URL=postgres://postgres:postgres@db:5432/taskmaster
       - REDIS_URL=redis://redis:6379/0
     depends_on:
@@ -129,6 +134,8 @@ services:
     build: .
     command: uv run celery -A config worker -l info
     environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=postgres://postgres:postgres@db:5432/taskmaster
       - REDIS_URL=redis://redis:6379/0
     depends_on:
@@ -139,6 +146,8 @@ services:
     build: .
     command: uv run celery -A config beat -l info
     environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - SECRET_KEY=${SECRET_KEY}
       - DATABASE_URL=postgres://postgres:postgres@db:5432/taskmaster
       - REDIS_URL=redis://redis:6379/0
     depends_on:
@@ -207,6 +216,24 @@ http {
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            # ⚠️ $scheme is whatever the request to nginx used (http here, since
+            # this compose only exposes :80). Django's production.py has
+            # SECURE_SSL_REDIRECT = True — combined with the line below it
+            # produces an infinite redirect loop: Django sees Proto=http,
+            # 301-redirects to https://, the client retries, hits nginx on
+            # :80 again, repeat.
+            #
+            # Two correct setups:
+            #   (a) Terminate TLS at an upstream LB (Cloudflare / ALB) and
+            #       have IT set X-Forwarded-Proto=https. Inside this nginx,
+            #       trust the header from the LB:
+            #         proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+            #       AND in production.py keep SECURE_PROXY_SSL_HEADER set.
+            #   (b) Terminate TLS at THIS nginx (add `listen 443 ssl;` +
+            #       cert paths) and set Proto=https unconditionally:
+            #         proxy_set_header X-Forwarded-Proto https;
+            #
+            # Do NOT use `$scheme` if SECURE_SSL_REDIRECT is on upstream.
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_redirect off;
         }
@@ -214,7 +241,7 @@ http {
 }
 ```
 
-For HTTPS production, terminate TLS in a load balancer (ALB, GCP LB, Cloudflare) and keep this nginx as a plain HTTP backend, or extend with `listen 443 ssl;` + cert paths.
+For HTTPS production, terminate TLS in a load balancer (ALB, GCP LB, Cloudflare) and keep this nginx as a plain HTTP backend, or extend with `listen 443 ssl;` + cert paths. **In either case, make sure whatever sits in front of Django sets `X-Forwarded-Proto: https` or you'll fight a redirect loop forever.**
 
 ### Settings split — refactor before adding `production.py`
 
@@ -277,6 +304,11 @@ DEBUG = False
 
 SECRET_KEY = config('SECRET_KEY')
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
+# Django 4.0+ requires CSRF_TRUSTED_ORIGINS when sitting behind a proxy that
+# rewrites Host. Without it, every POST → 403 "CSRF verification failed".
+# Provide full scheme://host entries, comma-separated in the env var:
+#   CSRF_TRUSTED_ORIGINS=https://taskmaster.com,https://www.taskmaster.com
+CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', cast=Csv())
 
 # Database
 DATABASES = {
@@ -353,7 +385,9 @@ jobs:
       postgres:
         image: postgres:15
         env:
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: taskmaster        # ← matches DATABASE_URL below
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -378,8 +412,10 @@ jobs:
       - name: Run tests
         run: uv run pytest --cov
         env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
+          DJANGO_SETTINGS_MODULE: config.settings.dev
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/taskmaster
           SECRET_KEY: test-secret-key
+          ALLOWED_HOSTS: localhost,127.0.0.1
 
   deploy:
     needs: test
