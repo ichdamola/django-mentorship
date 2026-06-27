@@ -8,7 +8,7 @@
 - Handle authentication and permissions
 - Document your API
 
-The DRF stack you'll wire up — a router exposes a ViewSet, which delegates serialization to a Serializer, which talks to the model:
+The DRF stack you'll wire up - a router exposes a ViewSet, which delegates serialization to a Serializer, which talks to the model:
 
 ```mermaid
 ---
@@ -233,7 +233,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
-    """Owner-scoped — a user only sees / writes / deletes their OWN categories."""
+    """Owner-scoped - a user only sees / writes / deletes their OWN categories."""
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -249,7 +249,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class TagViewSet(viewsets.ModelViewSet):
-    """Owner-scoped — same rationale as CategoryViewSet."""
+    """Owner-scoped - same rationale as CategoryViewSet."""
     serializer_class = TagSerializer
     permission_classes = [permissions.IsAuthenticated]
 
@@ -266,7 +266,7 @@ class TagViewSet(viewsets.ModelViewSet):
 > column on each (same migration pattern as Week 09's `Task.owner`). If you
 > intentionally want shared categories/tags (a multi-tenant team-scoped
 > taxonomy), make these viewsets `ReadOnlyModelViewSet` and lock writes to
-> `IsAdminUser` — anything in between leaks data across users.
+> `IsAdminUser` - anything in between leaks data across users.
 
 ### URL Routing
 
@@ -291,14 +291,14 @@ urlpatterns = [
 
 ### API versioning
 
-The `/api/v1/` prefix above is **URL path versioning** — the simplest scheme. When you ship a v2, mount a separate URL conf:
+The `/api/v1/` prefix above is **URL path versioning** - the simplest scheme. When you ship a v2, mount a separate URL conf:
 
 ```python
 path('api/v1/', include('tasks.urls_api')),
 path('api/v2/', include('tasks.urls_api_v2')),
 ```
 
-Both versions stay live until v1 consumers migrate. DRF also supports header-based versioning (`AcceptHeaderVersioning`) and namespace versioning — see DRF's [versioning docs](https://www.django-rest-framework.org/api-guide/versioning/) for when each fits.
+Both versions stay live until v1 consumers migrate. DRF also supports header-based versioning (`AcceptHeaderVersioning`) and namespace versioning - see DRF's [versioning docs](https://www.django-rest-framework.org/api-guide/versioning/) for when each fits.
 
 ### API Endpoints
 

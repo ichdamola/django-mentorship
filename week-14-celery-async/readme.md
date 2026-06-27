@@ -8,7 +8,7 @@
 - Monitor tasks with Flower
 - Use Django's async views
 
-This week you'll wire up the async path — work is published to Redis and consumed by separate worker processes:
+This week you'll wire up the async path - work is published to Redis and consumed by separate worker processes:
 
 ```mermaid
 ---
@@ -76,7 +76,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
-# Email — the tasks below call send_mail(). In development, route email to the
+# Email - the tasks below call send_mail(). In development, route email to the
 # console so the task succeeds without an SMTP server. Override with real SMTP
 # settings in production (EMAIL_HOST, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, etc.).
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -209,7 +209,7 @@ send_task_reminder.apply_async(
 result = process_import.delay('/path/to/file.csv')
 print(result.get(timeout=30))
 
-# Chain tasks — output of step N becomes first arg of step N+1.
+# Chain tasks - output of step N becomes first arg of step N+1.
 # Each task must accept the previous task's return type as its first arg.
 # Note: process_import returns a dict {status, records}; send_task_reminder
 # needs an int task_id. We bridge them with create_task_for_user, which
@@ -234,7 +234,7 @@ uv run celery -A config beat -l info
 # Start Flower (monitoring)
 uv run celery -A config flower
 
-# All in one (development ONLY — never in production)
+# All in one (development ONLY - never in production)
 # `-B` runs the beat scheduler embedded in the worker. Convenient locally,
 # unsafe in prod: if the worker dies, scheduled jobs stop firing. In
 # production, run `celery beat` as a separate process / container.
@@ -243,7 +243,7 @@ uv run celery -A config worker -B -l info
 
 ### Testing Celery tasks
 
-In tests, set `CELERY_TASK_ALWAYS_EAGER = True` to execute tasks synchronously in-process — no broker needed:
+In tests, set `CELERY_TASK_ALWAYS_EAGER = True` to execute tasks synchronously in-process - no broker needed:
 
 ```python
 # config/settings/test.py  (or override at the test class level)

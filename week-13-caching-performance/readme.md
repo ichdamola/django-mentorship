@@ -8,7 +8,7 @@
 - Profile and optimize application performance
 - Implement database connection pooling
 
-The cache-aside pattern you'll implement — hit Redis first, fall back to PostgreSQL and warm the cache on miss:
+The cache-aside pattern you'll implement - hit Redis first, fall back to PostgreSQL and warm the cache on miss:
 
 ```mermaid
 ---
@@ -61,7 +61,7 @@ CACHES = {
 }
 
 # Session backend (optional)
-# For production, prefer `cached_db` over `cache` — Redis restarts otherwise
+# For production, prefer `cached_db` over `cache` - Redis restarts otherwise
 # log every active user out. cached_db reads from cache, falls back to DB,
 # writes to both.
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
@@ -83,7 +83,7 @@ from django.utils.decorators import method_decorator
 #   @cache_page(60 * 15)
 #   def task_list(request):
 #       return ...filter(owner=request.user)
-# `cache_page` keys on URL + a few headers — NOT on request.user. The first
+# `cache_page` keys on URL + a few headers - NOT on request.user. The first
 # user's response is served to everyone else for 15 minutes. Privacy disaster.
 
 # ✅ Safe: cache_page is fine on PUBLIC views (homepage, marketing pages,
@@ -95,7 +95,7 @@ def public_homepage(request):
 # ✅ For per-user caching, use the low-level cache API with user.id in the
 # key (see "Low-Level Cache API" below). cache_page + vary_on_cookie works
 # in theory but the cache hit rate collapses because each session cookie is
-# unique — you're paying cache storage without amortizing across users.
+# unique - you're paying cache storage without amortizing across users.
 @cache_control(private=True, max_age=300)   # browser cache only; never server-cache
 def user_dashboard(request):
     ...
@@ -181,14 +181,14 @@ import dj_database_url
 DATABASES = {
     'default': dj_database_url.config(
         default='postgres://user:pass@localhost/dbname',
-        conn_max_age=600,  # PERSISTENT connections — keeps each worker's
+        conn_max_age=600,  # PERSISTENT connections - keeps each worker's
                            # connection alive for 600s between requests
                            # instead of opening/closing per request.
     )
 }
 ```
 
-> ⚠️ **CONN_MAX_AGE is not connection pooling — it's persistent connections.** They're related but distinct:
+> ⚠️ **CONN_MAX_AGE is not connection pooling - it's persistent connections.** They're related but distinct:
 >
 > - **Persistent connections (`CONN_MAX_AGE`):** each Gunicorn/uWSGI worker keeps *one* DB connection open across requests. Cheap. Built into Django. Avoids the per-request connect/auth/SSL overhead.
 > - **Real connection pooling:** a shared pool that multiple workers/processes draw from. Provided by **PgBouncer** (external process) or **Django 5.1+'s `OPTIONS={'pool': True}`** (in-process via psycopg3). Crucial when you have *many* workers and Postgres' `max_connections` limit becomes a bottleneck.
@@ -201,7 +201,7 @@ DATABASES = {
 # Install django-silk for profiling
 uv add --dev django-silk
 
-# config/settings.py — dev only
+# config/settings.py - dev only
 if DEBUG:
     INSTALLED_APPS += ['silk']
     MIDDLEWARE += ['silk.middleware.SilkyMiddleware']

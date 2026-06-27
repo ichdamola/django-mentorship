@@ -17,7 +17,7 @@ By the end of this week, you will:
 - Work with request/response objects
 - Implement redirects, error handling, and HTTP responses
 
-The routing path you'll wire up — URLs dispatch to either a function-based or a class-based view:
+The routing path you'll wire up - URLs dispatch to either a function-based or a class-based view:
 
 ```mermaid
 ---
@@ -91,11 +91,11 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Task, Category, Status, Priority
 
 
-# 🚨 The pattern below — string-building HTML from user data — is a SECURITY
+# 🚨 The pattern below - string-building HTML from user data - is a SECURITY
 # ANTI-PATTERN. We use `escape()` and `format_html()` here only because we
 # haven't taught templates yet. Switch to Option B / Week 06 templates
 # (which auto-escape by default) as soon as possible. NEVER ship raw
-# f-string HTML touching user input — that's stored XSS.
+# f-string HTML touching user input - that's stored XSS.
 
 def task_list(request: HttpRequest) -> HttpResponse:
     """List all tasks."""
@@ -106,7 +106,7 @@ def task_list(request: HttpRequest) -> HttpResponse:
     if status:
         tasks = tasks.filter(status=status)
 
-    # Build simple HTML response — escape() everything from the database.
+    # Build simple HTML response - escape() everything from the database.
     html = "<h1>Tasks</h1>"
     html += '<p><a href="?status=pending">Pending</a> | '
     html += '<a href="?status=completed">Completed</a> | '
@@ -131,7 +131,7 @@ def task_detail(request: HttpRequest, pk: int) -> HttpResponse:
     """Show task details."""
     task = get_object_or_404(Task, pk=pk)
 
-    # Same escaping rule — title and description come from user input.
+    # Same escaping rule - title and description come from user input.
     html = format_html(
         """
         <h1>{title}</h1>
@@ -154,7 +154,7 @@ def task_detail(request: HttpRequest, pk: int) -> HttpResponse:
     return HttpResponse(html)
 
 
-@csrf_exempt   # ⚠️ Learning-only — Week 07 introduces the proper {% csrf_token %} flow.
+@csrf_exempt   # ⚠️ Learning-only - Week 07 introduces the proper {% csrf_token %} flow.
 def task_create(request: HttpRequest) -> HttpResponse:
     """Create a new task."""
     if request.method == 'POST':
@@ -195,7 +195,7 @@ def task_create(request: HttpRequest) -> HttpResponse:
     return HttpResponse(html)
 
 
-@csrf_exempt   # ⚠️ Learning-only — Week 07 introduces the proper {% csrf_token %} flow.
+@csrf_exempt   # ⚠️ Learning-only - Week 07 introduces the proper {% csrf_token %} flow.
 def task_delete(request: HttpRequest, pk: int) -> HttpResponse:
     """Delete a task."""
     task = get_object_or_404(Task, pk=pk)
@@ -218,7 +218,7 @@ def task_delete(request: HttpRequest, pk: int) -> HttpResponse:
     return HttpResponse(html)
 ```
 
-> ⚠️ **About `@csrf_exempt`.** We're disabling CSRF here only because we haven't reached Week 07 (forms) yet. **Never** ship a real Django app with `@csrf_exempt` on a POST handler — it lets any site on the internet submit form data on behalf of your logged-in users. Week 07 teaches the right pattern: a Django `Form`, an `{% csrf_token %}` tag in the template, and a `render()` call that handles all of this for you.
+> ⚠️ **About `@csrf_exempt`.** We're disabling CSRF here only because we haven't reached Week 07 (forms) yet. **Never** ship a real Django app with `@csrf_exempt` on a POST handler - it lets any site on the internet submit form data on behalf of your logged-in users. Week 07 teaches the right pattern: a Django `Form`, an `{% csrf_token %}` tag in the template, and a `render()` call that handles all of this for you.
 
 **Option B: With Templates (Requires Week 06)**
 
@@ -479,7 +479,7 @@ class DashboardView(TemplateView):
         context['completed_tasks'] = Task.objects.filter(status=Status.COMPLETED).count()
         context['pending_tasks'] = Task.objects.filter(status=Status.PENDING).count()
         context['in_progress_tasks'] = Task.objects.filter(status=Status.IN_PROGRESS).count()
-        # 5 most recently created — feeds the "Recent tasks" panel in the
+        # 5 most recently created - feeds the "Recent tasks" panel in the
         # dashboard template from Week 06.
         context['recent_tasks'] = Task.objects.order_by('-created_at')[:5]
         context['categories'] = Category.objects.annotate(
@@ -657,7 +657,7 @@ Implement all CRUD views for TaskMaster with proper URL patterns:
 Pick **one** mount pattern and stick with it. This curriculum uses the pattern from Exercise 5.3: `tasks/urls.py` paths are app-relative, and `config/urls.py` mounts them at `tasks/`.
 
 ```python
-# config/urls.py — mounts tasks under /tasks/
+# config/urls.py - mounts tasks under /tasks/
 from django.contrib import admin
 from django.urls import path, include
 
@@ -668,7 +668,7 @@ urlpatterns = [
 ```
 
 ```python
-# tasks/urls.py — paths here are app-relative (no leading 'tasks/')
+# tasks/urls.py - paths here are app-relative (no leading 'tasks/')
 from django.urls import path
 from . import views
 
@@ -678,11 +678,11 @@ urlpatterns = [
     # Dashboard at /tasks/
     path('', views.dashboard, name='dashboard'),
 
-    # Task CRUD — final URLs: /tasks/list/, /tasks/create/, etc.
+    # Task CRUD - final URLs: /tasks/list/, /tasks/create/, etc.
     path('list/', views.task_list, name='task_list'),
     path('create/', views.task_create, name='task_create'),
     path('<int:pk>/', views.task_detail, name='task_detail'),
-    # Update lives on the CBV from Part 2 — no FBV equivalent in this week.
+    # Update lives on the CBV from Part 2 - no FBV equivalent in this week.
     # Use the CBV's as_view() (CBVs need .as_view() to satisfy the URL resolver):
     path('<int:pk>/edit/', views.TaskUpdateView.as_view(), name='task_update'),
     path('<int:pk>/delete/', views.task_delete, name='task_delete'),
@@ -691,11 +691,11 @@ urlpatterns = [
     path('<int:pk>/complete/', views.task_complete, name='task_complete'),
     path('<int:pk>/reopen/', views.task_reopen, name='task_reopen'),
 
-    # Categories — final URL: /tasks/categories/
+    # Categories - final URL: /tasks/categories/
     path('categories/', views.category_list, name='category_list'),
     path('categories/<int:pk>/', views.category_detail, name='category_detail'),
 
-    # API — final URL: /tasks/api/tasks/
+    # API - final URL: /tasks/api/tasks/
     path('api/', views.api_task_list, name='api_task_list'),
     path('api/<int:pk>/', views.api_task_detail, name='api_task_detail'),
 ]

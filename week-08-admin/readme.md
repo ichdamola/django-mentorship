@@ -68,7 +68,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 class TaskAttachmentInline(admin.TabularInline):
-    """Inline editor for attachments — appears inside the Task change form."""
+    """Inline editor for attachments - appears inside the Task change form."""
     model = TaskAttachment
     extra = 1
     fields = ['file', 'uploaded_at']
@@ -172,7 +172,7 @@ class OverdueFilter(SimpleListFilter):
         return queryset
 ```
 
-Add it to `list_filter` — pass the **class**, not a string:
+Add it to `list_filter` - pass the **class**, not a string:
 
 ```python
 class TaskAdmin(admin.ModelAdmin):
@@ -218,7 +218,7 @@ def export_as_csv(self, request, queryset):
 
 Two non-obvious things about actions:
 
-1. **`queryset.update()` does NOT trigger `save()`** — no signals, no `auto_now`. If you need those, iterate (`for obj in queryset: obj.status = '...'; obj.save()`) and accept the N writes.
+1. **`queryset.update()` does NOT trigger `save()`** - no signals, no `auto_now`. If you need those, iterate (`for obj in queryset: obj.status = '...'; obj.save()`) and accept the N writes.
 2. Actions that touch many rows should be paginated or queued. For 100k+ rows, kick off a Celery task ([Week 14](../week-14-celery-async/)) instead of doing the work synchronously.
 
 ---
@@ -260,9 +260,9 @@ class TaskAdmin(admin.ModelAdmin):
 
 ---
 
-## Part 5: Save hooks — `save_model`, `save_formset`
+## Part 5: Save hooks - `save_model`, `save_formset`
 
-Run logic when the admin saves a Task — e.g., automatically setting the owner on create:
+Run logic when the admin saves a Task - e.g., automatically setting the owner on create:
 
 ```python
 class TaskAdmin(admin.ModelAdmin):
@@ -272,10 +272,10 @@ class TaskAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 ```
 
-For inlines (the attachments attached to the Task), `save_formset` is the equivalent. The example below assumes you've added an `uploaded_by` FK to `TaskAttachment` — Week 07's model only has `(task, file, uploaded_at)`, so add this field first:
+For inlines (the attachments attached to the Task), `save_formset` is the equivalent. The example below assumes you've added an `uploaded_by` FK to `TaskAttachment` - Week 07's model only has `(task, file, uploaded_at)`, so add this field first:
 
 ```python
-# tasks/models.py — extend TaskAttachment if you want save_formset auditing
+# tasks/models.py - extend TaskAttachment if you want save_formset auditing
 class TaskAttachment(models.Model):
     task = models.ForeignKey(Task, related_name='attachments', on_delete=models.CASCADE)
     file = models.FileField(upload_to='task_attachments/%Y/%m/')
@@ -319,12 +319,12 @@ For a custom admin URL (e.g. `/secret-admin/` to slow down opportunistic scanner
 ```python
 # config/urls.py
 urlpatterns = [
-    path('secret-admin/', admin.site.urls),   # not actual security — just obscurity
+    path('secret-admin/', admin.site.urls),   # not actual security - just obscurity
     # ...
 ]
 ```
 
-> 🚨 Renaming the URL is **not** a security control — it stops casual scanning, not actual attackers. Combine with IP allow-listing, 2FA, and account lockouts ([Week 04](../week-04-models-basics/) → AppSec curriculum) for real defense.
+> 🚨 Renaming the URL is **not** a security control - it stops casual scanning, not actual attackers. Combine with IP allow-listing, 2FA, and account lockouts ([Week 04](../week-04-models-basics/) → AppSec curriculum) for real defense.
 
 ---
 
@@ -366,7 +366,7 @@ class TaskAdminSite(admin.AdminSite):
 admin_site = TaskAdminSite(name='task_admin')
 ```
 
-Then point `config/urls.py` at `admin_site.urls` instead of the default. Template at `templates/admin/dashboard.html` — extends `'admin/base_site.html'` for the styling to match.
+Then point `config/urls.py` at `admin_site.urls` instead of the default. Template at `templates/admin/dashboard.html` - extends `'admin/base_site.html'` for the styling to match.
 
 ---
 
@@ -387,7 +387,7 @@ For `list_display` callables that hit ManyToMany or reverse FKs, prefetch in `ge
         return super().get_queryset(request).prefetch_related('tags', 'attachments')
 ```
 
-Install **Django Debug Toolbar** ([Week 12](../week-12-advanced-orm/)) to see the actual query count and runtime per page — the admin will silently issue thousands of queries if you don't watch.
+Install **Django Debug Toolbar** ([Week 12](../week-12-advanced-orm/)) to see the actual query count and runtime per page - the admin will silently issue thousands of queries if you don't watch.
 
 ---
 
@@ -397,7 +397,7 @@ Install **Django Debug Toolbar** ([Week 12](../week-12-advanced-orm/)) to see th
 - [ ] `TaskAdmin` has `list_display`, `list_filter`, `search_fields`, `list_editable`, `date_hierarchy`
 - [ ] `TaskAttachmentInline` attached to `TaskAdmin` via `inlines = [...]`
 - [ ] At least one `SimpleListFilter` (the OverdueFilter, or your own)
-- [ ] At least three admin actions wired up — including `export_as_csv`
+- [ ] At least three admin actions wired up - including `export_as_csv`
 - [ ] `list_select_related` on `TaskAdmin` covers every FK shown in `list_display`
 - [ ] `get_queryset` enforces "non-superusers see only their own tasks"
 - [ ] Admin site customizations (site_header, site_title, index_title)

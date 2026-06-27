@@ -123,7 +123,7 @@ from django.http import HttpRequest, HttpResponse
 # 🚨 The f-string HTML below is a teaching simplification. The data is
 # hardcoded so no XSS, but the moment user input flows in (Week 05's
 # task_create), this same pattern becomes a stored XSS vulnerability.
-# In Week 06 we'll switch to templates — which auto-escape by default and
+# In Week 06 we'll switch to templates - which auto-escape by default and
 # are the correct production pattern. Do NOT carry this f-string style
 # forward to views that touch request.POST data.
 

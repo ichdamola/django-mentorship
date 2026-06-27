@@ -71,7 +71,7 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = 'accounts.User'  # ← add this line BEFORE you run migrate
 
-# Auth flow URLs — set these so @login_required and PasswordResetView
+# Auth flow URLs - set these so @login_required and PasswordResetView
 # redirect to the correctly namespaced auth pages.
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'accounts:profile'
@@ -129,7 +129,7 @@ from django.shortcuts import redirect, render
 
 class CustomUserCreationForm(UserCreationForm):
     # UserCreationForm.Meta.model is hard-coded to auth.User, which is
-    # swapped out once AUTH_USER_MODEL is set — using it as-is raises
+    # swapped out once AUTH_USER_MODEL is set - using it as-is raises
     # "Manager isn't available; 'auth.User' has been swapped". Override.
     # Also: collect email at signup so password reset + transactional
     # email work end-to-end (Week 14 Celery emails depend on this).
@@ -169,7 +169,7 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('profile/', views.profile, name='profile'),
 
-    # Password reset — because we're inside `app_name = 'accounts'`, the
+    # Password reset - because we're inside `app_name = 'accounts'`, the
     # default URL names (`password_reset_done`, `password_reset_complete`)
     # get prefixed to `accounts:password_reset_done` etc. The built-in views
     # default `success_url` to the *unnamespaced* name, so we must override
@@ -288,11 +288,11 @@ class TaskDeleteView(PermissionRequiredMixin, DeleteView):
 
 ### User-Specific Data
 
-You're about to add a `ForeignKey` to a model that already has rows (the tasks from Week 04). A naive `models.ForeignKey(..., on_delete=CASCADE)` is **non-null** — `migrate` will fail or prompt for a one-off default that assigns every existing task to a single user (wrong).
+You're about to add a `ForeignKey` to a model that already has rows (the tasks from Week 04). A naive `models.ForeignKey(..., on_delete=CASCADE)` is **non-null** - `migrate` will fail or prompt for a one-off default that assigns every existing task to a single user (wrong).
 
 There are three correct ways to do this. **Pick one** and follow it through:
 
-**Option A — fresh start (simplest if you're solo).** Wipe the dev database and re-seed:
+**Option A - fresh start (simplest if you're solo).** Wipe the dev database and re-seed:
 
 ```bash
 rm db.sqlite3
@@ -302,7 +302,7 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-**Option B — nullable first, then a data migration.** Production-safe pattern:
+**Option B - nullable first, then a data migration.** Production-safe pattern:
 
 ```python
 # Step 1: nullable FK
@@ -353,7 +353,7 @@ class Task(models.Model):
     )   # null=True removed
 ```
 
-**Option C — accept the one-off default during migrate**: when Django prompts you, pick option `1` and supply `1` (the superuser's PK). Only do this if you're certain the dev DB has one superuser and you don't care about the existing tasks.
+**Option C - accept the one-off default during migrate**: when Django prompts you, pick option `1` and supply `1` (the superuser's PK). Only do this if you're certain the dev DB has one superuser and you don't care about the existing tasks.
 
 Once `owner` is in place, the view code is:
 

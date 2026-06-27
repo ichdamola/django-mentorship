@@ -90,7 +90,7 @@ Category.objects.annotate(
     completed_count=Count('tasks', filter=Q(tasks__status='completed')),
 ).values('name', 'task_count', 'completed_count')
 
-# Computed fields — backend-aware: on Postgres `F('due_date') - timezone.now().date()`
+# Computed fields - backend-aware: on Postgres `F('due_date') - timezone.now().date()`
 # returns an `interval`; on SQLite the result is a string and __lte=7 doesn't
 # work as expected. For portable code, wrap in ExpressionWrapper with an
 # explicit output_field:
@@ -111,8 +111,8 @@ Task.objects.annotate(
 from django.db.models import Q, F, Case, When, Value
 from django.utils import timezone
 
-# OR conditions — "high priority OR overdue (derived, not a stored status)"
-# `Status` only has PENDING/IN_PROGRESS/COMPLETED/CANCELLED — "overdue" is a
+# OR conditions - "high priority OR overdue (derived, not a stored status)"
+# `Status` only has PENDING/IN_PROGRESS/COMPLETED/CANCELLED - "overdue" is a
 # computed condition, not a stored value. This is a more honest demonstration
 # of why Q exists in the first place.
 Task.objects.filter(
@@ -201,7 +201,7 @@ with connection.cursor() as cursor:
 
 ---
 
-## Part 2: N+1 lab — find and fix one yourself
+## Part 2: N+1 lab - find and fix one yourself
 
 Spin up Django Debug Toolbar and **see** the N+1 in action. Without this exercise the lesson stays abstract.
 
@@ -241,7 +241,7 @@ class TaskListView(ListView):
 {# tasks/templates/tasks/task_list.html #}
 {% for task in tasks %}
     <li>
-        {{ task.title }} — {{ task.category.name }} —
+        {{ task.title }} - {{ task.category.name }} -
         {% for tag in task.tags.all %}{{ tag.name }} {% endfor %}
     </li>
 {% endfor %}
@@ -298,7 +298,7 @@ The exact count is the contract: future commits that regress to 50+ queries brea
 
 ## Part 3: Subqueries with `Subquery` + `OuterRef`
 
-When a value depends on a query *per row*, neither aggregation nor JOIN nor a Python loop is the right tool — `Subquery` is. The use case: "for each Category, show the title of its most recently created task."
+When a value depends on a query *per row*, neither aggregation nor JOIN nor a Python loop is the right tool - `Subquery` is. The use case: "for each Category, show the title of its most recently created task."
 
 ```python
 from django.db.models import Subquery, OuterRef
@@ -315,7 +315,7 @@ Category.objects.annotate(
 ).values('name', 'latest_title')
 ```
 
-The generated SQL is a correlated subquery — one query for the whole result set, not N. Common variant: count comparisons across queries:
+The generated SQL is a correlated subquery - one query for the whole result set, not N. Common variant: count comparisons across queries:
 
 ```python
 # "Categories whose latest task is overdue"
@@ -331,7 +331,7 @@ Category.objects.annotate(
 ).filter(latest_due_date__lt=timezone.now().date())
 ```
 
-Use `Exists` for "any" / "none" subqueries — it's cheaper than `Subquery + count > 0`:
+Use `Exists` for "any" / "none" subqueries - it's cheaper than `Subquery + count > 0`:
 
 ```python
 from django.db.models import Exists
@@ -350,7 +350,7 @@ Category.objects.annotate(
 
 ## Part 4: Window functions
 
-Django 2.0+ supports window functions for "rank within group," "running totals," "lag/lead" queries — things that previously required raw SQL.
+Django 2.0+ supports window functions for "rank within group," "running totals," "lag/lead" queries - things that previously required raw SQL.
 
 ```python
 from django.db.models import Window, F
@@ -377,7 +377,7 @@ Task.objects.annotate(
 )
 ```
 
-Window functions are expensive — they run after `WHERE` but before `LIMIT`, so a window over 1M rows is slow even if you only want the top 10. Combine with a CTE or a pre-filtered subquery.
+Window functions are expensive - they run after `WHERE` but before `LIMIT`, so a window over 1M rows is slow even if you only want the top 10. Combine with a CTE or a pre-filtered subquery.
 
 ---
 
@@ -392,31 +392,31 @@ from django.db.models.functions import (
     TruncDate, TruncMonth, ExtractYear, Greatest, Least, Now,
 )
 
-# Concat — build a full label in SQL
+# Concat - build a full label in SQL
 Task.objects.annotate(
     label=Concat('title', Value(' ('), 'status', Value(')')),
 ).values('label')
 
-# Coalesce — first non-null
+# Coalesce - first non-null
 Task.objects.annotate(
     effective_due=Coalesce('due_date', Now()),
 )
 
-# TruncMonth — group by month
+# TruncMonth - group by month
 from django.db.models import Count
 Task.objects.annotate(
     month=TruncMonth('created_at'),
 ).values('month').annotate(c=Count('id')).order_by('month')
 
-# Length — index-friendly filter
+# Length - index-friendly filter
 Task.objects.annotate(title_len=Length('title')).filter(title_len__gt=50)
 ```
 
-These run in the database, not Python. Critical for performance on large result sets — pulling 100k rows back to do `.lower()` in a Python loop is 1000× slower than a single `Lower()` annotation.
+These run in the database, not Python. Critical for performance on large result sets - pulling 100k rows back to do `.lower()` in a Python loop is 1000× slower than a single `Lower()` annotation.
 
 ---
 
-## Part 6: QuerySet evaluation — caching pitfalls
+## Part 6: QuerySet evaluation - caching pitfalls
 
 QuerySets are lazy. They evaluate (and cache) on:
 
@@ -431,7 +431,7 @@ Common bugs:
 ```python
 qs = Task.objects.filter(status='pending')
 
-# BUG: two queries — count() does not use the iteration cache
+# BUG: two queries - count() does not use the iteration cache
 print(qs.count())   # SELECT COUNT(*) ...
 print(len(qs))      # SELECT * ... + Python-side len
 
@@ -447,12 +447,12 @@ def category_count():
 context['category_count'] = Category.objects.count()
 ```
 
-And the **shared queryset cache gotcha** — slicing creates a *new* queryset that does NOT share the cache:
+And the **shared queryset cache gotcha** - slicing creates a *new* queryset that does NOT share the cache:
 
 ```python
 qs = Task.objects.all()
 list(qs)              # query 1, cached
-qs[:10]               # query 2 — fresh, ignores the cache
+qs[:10]               # query 2 - fresh, ignores the cache
 list(qs[:10])         # query 3 even though qs is already fetched
 ```
 
@@ -477,11 +477,11 @@ The ORM covers 95% of cases. The remaining 5% is when raw SQL is the right answe
 Two safe entry points:
 
 ```python
-# Raw queryset — returns model instances
+# Raw queryset - returns model instances
 for task in Task.objects.raw('SELECT * FROM tasks_task WHERE priority = %s', [3]):
     print(task.title)
 
-# Cursor — for queries that don't map to a model
+# Cursor - for queries that don't map to a model
 from django.db import connection
 with connection.cursor() as cursor:
     cursor.execute('SELECT status, COUNT(*) FROM tasks_task GROUP BY status')
@@ -489,7 +489,7 @@ with connection.cursor() as cursor:
         print(status, count)
 ```
 
-> ⚠️ **Always parameterize.** `cursor.execute('SELECT ... WHERE id = %s', [user_id])`, never f-strings or `%`-formatting. SQL injection is the same here as anywhere else — see [appsec-mentorship Week 05](https://github.com/ichdamola/appsec-mentorship/blob/main/week-05-sql-injection/attack.md).
+> ⚠️ **Always parameterize.** `cursor.execute('SELECT ... WHERE id = %s', [user_id])`, never f-strings or `%`-formatting. SQL injection is the same here as anywhere else - see [appsec-mentorship Week 05](https://github.com/ichdamola/appsec-mentorship/blob/main/week-05-sql-injection/attack.md).
 
 ---
 
@@ -498,11 +498,11 @@ with connection.cursor() as cursor:
 A loop of `Model.objects.create(...)` issues one INSERT per row. For 10k rows, that's 10k round trips:
 
 ```python
-# BAD — 10,000 round trips
+# BAD - 10,000 round trips
 for row in rows:
     Task.objects.create(title=row['title'], status='pending')
 
-# GOOD — 1 query (or batches)
+# GOOD - 1 query (or batches)
 tasks = [Task(title=row['title'], status='pending') for row in rows]
 Task.objects.bulk_create(tasks, batch_size=1000)
 ```
@@ -516,7 +516,7 @@ for t in tasks_to_update:
 Task.objects.bulk_update(tasks_to_update, ['priority'], batch_size=1000)
 ```
 
-Caveats: `bulk_create` does NOT call `save()` — no signals, no `auto_now` field updates, and you should not rely on `pre_save` / `post_save` firing. PKs are populated on Postgres, SQLite (3.35+), MariaDB, and Oracle via `RETURNING` (Django 4.0+ for SQLite, broader since then). MySQL still doesn't unless you fetch them back. Use `bulk_create` when you know you don't need signals.
+Caveats: `bulk_create` does NOT call `save()` - no signals, no `auto_now` field updates, and you should not rely on `pre_save` / `post_save` firing. PKs are populated on Postgres, SQLite (3.35+), MariaDB, and Oracle via `RETURNING` (Django 4.0+ for SQLite, broader since then). MySQL still doesn't unless you fetch them back. Use `bulk_create` when you know you don't need signals.
 
 ---
 

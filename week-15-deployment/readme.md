@@ -8,7 +8,7 @@
 - Configure CI/CD with GitHub Actions
 - Implement security best practices
 
-The CI/CD pipeline you'll set up — every push runs through GitHub Actions before any artifact reaches production:
+The CI/CD pipeline you'll set up - every push runs through GitHub Actions before any artifact reaches production:
 
 ```mermaid
 ---
@@ -51,7 +51,7 @@ flowchart LR
 FROM python:3.12-slim
 
 # Set environment variables. DJANGO_SETTINGS_MODULE MUST be set before
-# `collectstatic` runs below — otherwise it picks up dev.py which imports
+# `collectstatic` runs below - otherwise it picks up dev.py which imports
 # `debug_toolbar`, which `--no-dev` just excluded.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -95,7 +95,7 @@ CMD ["uv", "run", "gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000
 
 ```yaml
 # docker-compose.yml
-# (no `version:` key — deprecated in Compose v2+)
+# (no `version:` key - deprecated in Compose v2+)
 
 services:
   web:
@@ -172,7 +172,7 @@ volumes:
   media_volume:
 ```
 
-### `nginx.conf` — referenced above, write it now
+### `nginx.conf` - referenced above, write it now
 
 The compose file mounts `./nginx.conf` into the nginx container. Create it at the project root:
 
@@ -218,7 +218,7 @@ http {
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             # ⚠️ $scheme is whatever the request to nginx used (http here, since
             # this compose only exposes :80). Django's production.py has
-            # SECURE_SSL_REDIRECT = True — combined with the line below it
+            # SECURE_SSL_REDIRECT = True - combined with the line below it
             # produces an infinite redirect loop: Django sees Proto=http,
             # 301-redirects to https://, the client retries, hits nginx on
             # :80 again, repeat.
@@ -243,7 +243,7 @@ http {
 
 For HTTPS production, terminate TLS in a load balancer (ALB, GCP LB, Cloudflare) and keep this nginx as a plain HTTP backend, or extend with `listen 443 ssl;` + cert paths. **In either case, make sure whatever sits in front of Django sets `X-Forwarded-Proto: https` or you'll fight a redirect loop forever.**
 
-### Settings split — refactor before adding `production.py`
+### Settings split - refactor before adding `production.py`
 
 We've been editing one monolithic `config/settings.py` since Week 03. The production-ready layout splits it by environment so each context inherits a shared base:
 
@@ -257,7 +257,7 @@ config/
     └── production.py      # imports base, hardens for prod
 ```
 
-**Step 1 — convert the single file into the split:**
+**Step 1 - convert the single file into the split:**
 
 ```bash
 cd config
@@ -266,9 +266,9 @@ git mv settings.py settings/base.py   # preserves history
 touch settings/__init__.py
 ```
 
-**Step 2 — strip dev-only knobs out of `base.py`** (anything `DEBUG`-gated, anything with secrets, anything env-specific). Move them into `dev.py` and `production.py` respectively.
+**Step 2 - strip dev-only knobs out of `base.py`** (anything `DEBUG`-gated, anything with secrets, anything env-specific). Move them into `dev.py` and `production.py` respectively.
 
-**Step 3 — create `dev.py`:**
+**Step 3 - create `dev.py`:**
 
 ```python
 # config/settings/dev.py
@@ -283,20 +283,20 @@ MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware', *MIDDLEWARE]
 INTERNAL_IPS = ['127.0.0.1']
 ```
 
-**Step 4 — tell Django which file to use.** Set `DJANGO_SETTINGS_MODULE` in your environment (or `manage.py`):
+**Step 4 - tell Django which file to use.** Set `DJANGO_SETTINGS_MODULE` in your environment (or `manage.py`):
 
 ```python
-# manage.py — make the default explicit
+# manage.py - make the default explicit
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.dev')
 ```
 
-Production then sets `DJANGO_SETTINGS_MODULE=config.settings.production` via env var (Dockerfile, systemd unit, Procfile — wherever).
+Production then sets `DJANGO_SETTINGS_MODULE=config.settings.production` via env var (Dockerfile, systemd unit, Procfile - wherever).
 
-**Step 5 — now write `production.py`:**
+**Step 5 - now write `production.py`:**
 
 ```python
 # config/settings/production.py
-from decouple import config, Csv   # explicit import — was missing in earlier draft
+from decouple import config, Csv   # explicit import - was missing in earlier draft
 from .base import *
 import dj_database_url
 
@@ -324,12 +324,12 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True              # opt into the browser preload list (once stable)
 SECURE_CONTENT_TYPE_NOSNIFF = True
-# SECURE_BROWSER_XSS_FILTER deliberately omitted — the X-XSS-Protection header
+# SECURE_BROWSER_XSS_FILTER deliberately omitted - the X-XSS-Protection header
 # it sets was retired by Chrome/Edge years ago and Mozilla recommends against
 # enabling it. Modern XSS defense is a Content Security Policy header instead.
 X_FRAME_OPTIONS = 'DENY'
 
-# Static files — WhiteNoise serves them in production.
+# Static files - WhiteNoise serves them in production.
 # 1) Install: uv add whitenoise
 # 2) Wire the middleware (do this in base.py, not here, so dev gets it too):
 #       MIDDLEWARE = [
@@ -339,7 +339,7 @@ X_FRAME_OPTIONS = 'DENY'
 #       ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Modern Django (4.2+) — use the STORAGES dict, not STATICFILES_STORAGE.
+# Modern Django (4.2+) - use the STORAGES dict, not STATICFILES_STORAGE.
 STORAGES = {
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',

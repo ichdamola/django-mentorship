@@ -199,7 +199,7 @@ class Task(models.Model):
     )
 
     # Many-to-many: a task can have many tags, a tag tags many tasks.
-    # Tag is defined below — Django resolves the forward reference at
+    # Tag is defined below - Django resolves the forward reference at
     # class-creation time.
     tags = models.ManyToManyField(
         "Tag",
@@ -274,7 +274,7 @@ class Tag(models.Model):
 │                                                                  │
 │  BOOLEAN FIELDS                                                  │
 │  ├── BooleanField()              BOOLEAN (required)              │
-│  └── BooleanField(null=True)     BOOLEAN (nullable) — use this   │
+│  └── BooleanField(null=True)     BOOLEAN (nullable) - use this   │
 │      (NullBooleanField was REMOVED in Django 5.0)                │
 │                                                                  │
 │  DATE/TIME FIELDS                                                │
@@ -538,13 +538,13 @@ complex_query = Task.objects.filter(
 # Get tasks where updated_at > created_at
 modified = Task.objects.filter(updated_at__gt=F('created_at'))
 
-# Increase all priorities by 1 — but URGENT (4) → 5 is OUTSIDE Priority's
+# Increase all priorities by 1 - but URGENT (4) → 5 is OUTSIDE Priority's
 # choices and `Priority(self.priority).label` (see priority_display above)
 # will then raise ValueError. To stay safe, exclude already-max rows OR
 # clamp with Greatest/Least:
 Task.objects.exclude(priority=Priority.URGENT).update(priority=F('priority') + 1)
 # Note: in-memory Task instances held by the caller still show the OLD
-# priority value after an .update() — re-fetch with .refresh_from_db()
+# priority value after an .update() - re-fetch with .refresh_from_db()
 # if you need the new value.
 
 # Exists check (more efficient than count)

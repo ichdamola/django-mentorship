@@ -8,7 +8,7 @@
 - Mock external dependencies
 - Achieve high test coverage
 
-The testing setup you'll build — factories generate test data, conftest exposes fixtures, and each test file covers one layer:
+The testing setup you'll build - factories generate test data, conftest exposes fixtures, and each test file covers one layer:
 
 ```mermaid
 ---
@@ -388,7 +388,7 @@ def test_send_task_reminder_skips_users_without_email(task_factory, user_factory
 ```
 
 ```python
-# conftest.py — set eager mode for all tests
+# conftest.py - set eager mode for all tests
 @pytest.fixture(autouse=True)
 def _celery_eager(settings):
     settings.CELERY_TASK_ALWAYS_EAGER = True

@@ -8,7 +8,7 @@
 - Implement custom form validation
 - Work with formsets
 
-The form lifecycle you'll handle in your view — GET renders, POST validates and either saves or re-renders with errors:
+The form lifecycle you'll handle in your view - GET renders, POST validates and either saves or re-renders with errors:
 
 ```mermaid
 ---
@@ -256,15 +256,15 @@ def upload_attachment(request, task_id):
 
 ---
 
-## Part 3: Formsets — editing many objects on one page
+## Part 3: Formsets - editing many objects on one page
 
 A **formset** is a collection of the same form, rendered as one HTML form, validated as a batch. Two flavors:
 
-- **`formset_factory(MyForm)`** — N independent forms of the same type
-- **`modelformset_factory(MyModel, fields=[...])`** — N forms tied to model instances
-- **`inlineformset_factory(Parent, Child, fields=[...])`** — N child forms tied to ONE parent (the most common — "edit a Task and all its attachments at once")
+- **`formset_factory(MyForm)`** - N independent forms of the same type
+- **`modelformset_factory(MyModel, fields=[...])`** - N forms tied to model instances
+- **`inlineformset_factory(Parent, Child, fields=[...])`** - N child forms tied to ONE parent (the most common - "edit a Task and all its attachments at once")
 
-### Inline formset — edit Task with its Attachments
+### Inline formset - edit Task with its Attachments
 
 ```python
 # tasks/forms.py
@@ -310,7 +310,7 @@ def task_with_attachments(request, pk):
     {{ form.as_p }}
 
     <h3>Attachments</h3>
-    {{ formset.management_form }}    {# REQUIRED — formset state #}
+    {{ formset.management_form }}    {# REQUIRED - formset state #}
     {% for child_form in formset %}
         <fieldset class="attachment-row">
             {{ child_form.as_p }}
@@ -346,7 +346,7 @@ function addAttachmentRow() {
 </script>
 ```
 
-In real projects use `django-formset-js`, `htmx`, or a frontend framework — but knowing how the underlying TOTAL_FORMS counter works is the senior cue.
+In real projects use `django-formset-js`, `htmx`, or a frontend framework - but knowing how the underlying TOTAL_FORMS counter works is the senior cue.
 
 ---
 
@@ -391,7 +391,7 @@ def task_wizard_step_2(request):
         form = TaskDetailsForm(request.POST)
         if form.is_valid():
             step1 = request.session.pop('task_wizard_step1')
-            # Filter to actual Task fields — extra cleaned_data keys (e.g.,
+            # Filter to actual Task fields - extra cleaned_data keys (e.g.,
             # a CAPTCHA CharField on the form) would TypeError on Task.__init__.
             model_field_names = {f.name for f in Task._meta.get_fields()}
             combined = {**step1, **form.cleaned_data}
@@ -427,7 +427,7 @@ def validate_no_profanity(value: str) -> None:
 Then in the model OR the form:
 
 ```python
-# In model — runs on every full_clean() and on ModelForm validation
+# In model - runs on every full_clean() and on ModelForm validation
 class Task(models.Model):
     title = models.CharField(max_length=200, validators=[validate_no_profanity])
 
@@ -448,7 +448,7 @@ Validators run *after* type coercion but *before* `clean_<field>()`. Order matte
 | Contact form, signup-flow that doesn't directly save a model | `Form` |
 | API endpoint (JSON in, JSON out) | DRF `Serializer` ([Week 10](../week-10-rest-api/)) |
 | Search filters | `Form` (often unbound for display, bound on query) |
-| Multi-model save in one view | A `Form` whose `save()` orchestrates multiple `Model.objects.create()` calls — keep the multi-model save logic in the form, not the view. |
+| Multi-model save in one view | A `Form` whose `save()` orchestrates multiple `Model.objects.create()` calls - keep the multi-model save logic in the form, not the view. |
 
 The simplest test: if the form maps 1:1 to a single model's fields, `ModelForm` saves you boilerplate. Anything else, `Form` is more honest.
 

@@ -27,11 +27,11 @@ flowchart LR
 
 ## Project Options
 
-The default capstone is to **harden and finish TaskMaster** — the app you've been incrementally building from Week 03. That choice preserves the 15 weeks of investment and gives you a portfolio piece tied directly to the curriculum's architecture diagram.
+The default capstone is to **harden and finish TaskMaster** - the app you've been incrementally building from Week 03. That choice preserves the 15 weeks of investment and gives you a portfolio piece tied directly to the curriculum's architecture diagram.
 
-If you'd rather start fresh on a different domain — totally fine; the skills transfer. Pick ONE of the options below instead.
+If you'd rather start fresh on a different domain - totally fine; the skills transfer. Pick ONE of the options below instead.
 
-### Option 0 (default): TaskMaster — productionize and extend
+### Option 0 (default): TaskMaster - productionize and extend
 
 Take TaskMaster from "works on my machine" to "production-deployable" using **only what weeks 01-15 taught**:
 
@@ -43,16 +43,16 @@ Take TaskMaster from "works on my machine" to "production-deployable" using **on
 - **Public read-only sharing.** Use `django.core.signing.TimestampSigner` to mint expiring share links: `signer.sign_object({'task_id': pk}, ...)`. The view checks the signature with `signer.unsign_object(token, max_age=...)`. See [Django's signing docs](https://docs.djangoproject.com/en/stable/topics/signing/) for the 30-min crash course; it's stdlib Django.
 - **Analytics dashboard.** Aggregations from Week 12 (annotated querysets, time-series charts).
 - **Caching + N+1 hygiene.** Per-user keys for any user-scoped cache (Week 13 warning), `select_related`/`prefetch_related` on list views, `assertNumQueries` regression tests.
-- **Containerized + deployed** per Week 15 — with `DJANGO_SETTINGS_MODULE=config.settings.production` set, `CSRF_TRUSTED_ORIGINS` configured, and the `X-Forwarded-Proto` story matched to your TLS termination point.
+- **Containerized + deployed** per Week 15 - with `DJANGO_SETTINGS_MODULE=config.settings.production` set, `CSRF_TRUSTED_ORIGINS` configured, and the `X-Forwarded-Proto` story matched to your TLS termination point.
 - **CI/CD.** GitHub Actions running tests + ruff + a deploy on green main (Week 15).
 
-**Stretch (NOT reachable from this curriculum — pick one and learn it standalone if you want):**
+**Stretch (NOT reachable from this curriculum - pick one and learn it standalone if you want):**
 
 - **Real-time updates via Django Channels + WebSockets.** Channels was *not* covered in weeks 01-15. Reach for [the Channels tutorial](https://channels.readthedocs.io/en/stable/tutorial/) and budget ~1 week. Polling with `setInterval` + the existing REST endpoints is the pragmatic substitute.
 - **Outbound webhooks with HMAC signing.** Not covered. Read [Stripe's webhook signing docs](https://stripe.com/docs/webhooks/signatures) and use `hmac.compare_digest`; ~1 day of focused work. Without HMAC, the webhook is unauthenticated to the receiver.
 - **Server-Sent Events for live counts.** Simpler than Channels for "push something to one client"; uses standard HTTP, no extra dependency.
 
-The success criterion: a public URL you can demo to someone who's never seen the codebase, plus a `README` in the repo that walks through architecture and demos the key flows. The stretch items are bonuses, not requirements — the core list above is the bar.
+The success criterion: a public URL you can demo to someone who's never seen the codebase, plus a `README` in the repo that walks through architecture and demos the key flows. The stretch items are bonuses, not requirements - the core list above is the bar.
 
 ### Option A: Blog Platform
 

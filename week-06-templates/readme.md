@@ -10,7 +10,7 @@ By the end of this week, you will:
 - Build custom template tags and filters
 - Organize templates properly in your project
 
-The template hierarchy you'll build — small partials get included into one `base.html` skeleton, then every page extends it:
+The template hierarchy you'll build - small partials get included into one `base.html` skeleton, then every page extends it:
 
 ```mermaid
 ---
@@ -254,7 +254,7 @@ Create `templates/includes/_messages.html`:
 ```
 
 > ⚠️ **Map Django's `error` tag to Bootstrap's `danger`.** By default,
-> `messages.error(...)` tags the message with `error` — Bootstrap has no
+> `messages.error(...)` tags the message with `error` - Bootstrap has no
 > `alert-error` class (only `alert-danger`), so error messages render
 > unstyled. Add this to `config/settings.py`:
 >
@@ -1040,7 +1040,7 @@ def task_stats():
     }
 ```
 
-And the template the tag renders — create `tasks/templates/tasks/_task_stats.html`:
+And the template the tag renders - create `tasks/templates/tasks/_task_stats.html`:
 
 ```django
 {# tasks/templates/tasks/_task_stats.html #}
@@ -1055,7 +1055,7 @@ And the template the tag renders — create `tasks/templates/tasks/_task_stats.h
 Without that file, `{% task_stats %}` raises `TemplateDoesNotExist`.
 
 ```python
-# Back to the template tags module — continuing with ASSIGNMENT TAGS below.
+# Back to the template tags module - continuing with ASSIGNMENT TAGS below.
 
 
 # ============================================================
