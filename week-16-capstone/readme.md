@@ -267,7 +267,7 @@ If you've completed all 16 weeks, you now have:
 - Experience with modern Python tooling (uv, ruff, pytest)
 - Knowledge of REST API development
 - Testing and deployment skills
-- A portfolio project to showcase
+- A portfolio project to ship
 
 **You're ready to build production Django applications!**
 
